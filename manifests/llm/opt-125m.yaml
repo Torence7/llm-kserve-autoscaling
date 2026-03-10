@@ -1,12 +1,12 @@
 apiVersion: serving.kserve.io/v1alpha1
 kind: LLMInferenceService
 metadata:
-  name: distilgpt2
+  name: facebook-opt-125m
   namespace: llm-demo
 spec:
   model:
-    uri: hf://distilbert/distilgpt2
-    name: distilgpt2
+    uri: hf://facebook/opt-125m
+    name: facebook/opt-125m
   replicas: 1
   template:
     containers:
@@ -16,14 +16,14 @@ spec:
           runAsNonRoot: false
         env:
           - name: VLLM_LOGGING_LEVEL
-            value: DEBUG
+            value: INFO
         resources:
           requests:
-            cpu: "100m"
-            memory: 1Gi
+            cpu: "500m"
+            memory: 4Gi
           limits:
-            cpu: "1"
-            memory: 2Gi
+            cpu: "2"
+            memory: 10Gi
   router:
     gateway: {}
     route: {}
