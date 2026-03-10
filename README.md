@@ -41,7 +41,10 @@ bash scripts/07_patch_worker_probes.sh
 
 # Wait for pods:
 bash scripts/06_wait_pods.sh
+```
 
+Run with test  input:
+```bash
 bash scripts/08_portforward_opt.sh
 
 bash scripts/09_curl_opt.sh
