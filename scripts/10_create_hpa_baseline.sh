@@ -9,5 +9,6 @@ if [[ -z "${DEPLOY}" ]]; then
 fi
 
 echo "[10] Create HPA for ${DEPLOY}"
-kubectl autoscale deployment "${DEPLOY}" -n llm-demo --cpu 50% --min=1 --max=5
+kubectl autoscale deployment "${DEPLOY}" -n llm-demo --cpu-percent=50 --min=1 --max=5
+
 kubectl get hpa -n llm-demo
