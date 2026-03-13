@@ -22,6 +22,13 @@ sudo apt-get install -y docker.io git curl
 sudo systemctl enable --now docker
 sudo usermod -aG docker $USER
 newgrp docker
+
+#Verify
+groups
+ls -l /var/run/docker.sock
+sudo usermod -aG docker $USER
+docker ps
+docker run hello-world
 ```
 
 ```bash
@@ -48,4 +55,10 @@ Run with test  input:
 bash scripts/08_portforward_opt.sh
 
 bash scripts/09_curl_opt.sh
+```
+
+Autoscaling Baseline
+```bash
+bash scripts/10_create_hpa_baseline.sh
+bash scripts/11_load_test.sh
 ```
