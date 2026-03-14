@@ -1,4 +1,4 @@
-# OPT-125M on KServe (CloudLab baseline)
+# OPT-125M on KServe (CloudLab)
 
 Reproducible baseline deployment of OPT-125M (vLLM CPU) on Kubernetes via KServe + LLMInferenceService.
 Then establish a reactive autoscaling baseline (CPU HPA).
