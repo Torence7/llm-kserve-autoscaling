@@ -57,8 +57,16 @@ bash scripts/08_portforward_opt.sh
 bash scripts/09_curl_opt.sh
 ```
 
-Autoscaling Baseline
+Autoscaling HPA Baseline
 ```bash
 bash scripts/10_create_hpa_baseline.sh
 bash scripts/11_load_test.sh
+```
+
+KEDA Setup
+```bash
+bash  scripts/12_install_keda.sh
+bash scripts/13_apply_keda_scaledobject.sh
+bash scripts/14_verify_keda.sh
+bash scripts/15_watch_keda_scaling.sh
 ```

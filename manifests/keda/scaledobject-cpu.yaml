@@ -1,0 +1,17 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: opt125m-cpu
+  namespace: llm-demo
+spec:
+  scaleTargetRef:
+    name: facebook-opt-125m-kserve   #your worker Deployment name
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  pollingInterval: 15        # seconds (how often KEDA checks)
+  cooldownPeriod: 60         # seconds (how long before scaling down)
+  triggers:
+    - type: cpu
+      metadata:
+        type: Utilization
+        value: "50"          # target CPU utilization %
