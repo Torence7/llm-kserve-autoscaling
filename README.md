@@ -62,3 +62,7 @@ Autoscaling Baseline
 bash scripts/10_create_hpa_baseline.sh
 bash scripts/11_load_test.sh
 ```
+Get vLLM Metrics
+```bash
+curl -s http://localhost:8000/metrics | grep vllm
+```
