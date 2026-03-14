@@ -39,7 +39,7 @@ bash scripts/00_bootstrap_tools.sh
 bash scripts/01_create_kind_cluster.sh
 bash scripts/02_install_metrics_server.sh
 bash scripts/03_install_llmisvc_stack.sh
-bash scripts/03b_install_llmisvc_stack.sh
+bash scripts/03b_verify_llmisvc.sh
 bash scripts/04_apply_llm_presets.sh
 bash scripts/05_deploy_llm_opt125m.sh
 
