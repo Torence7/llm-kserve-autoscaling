@@ -94,5 +94,6 @@ bash scripts/benchmark/guidellm_sweep.sh
 Benchmark option B: Constant rate
 This holds a fixed request rate for a fixed duration.
 ```bash
-bash scripts/benchmark/guidellm_sweep.sh
+bash scripts/benchmark/guidellm_constant_rate.sh
+RATES="2 6 10 14" MAX_SECONDS=90 bash scripts/benchmark/guidellm_constant_rate.sh
 ```
