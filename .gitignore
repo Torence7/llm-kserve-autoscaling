@@ -3,3 +3,6 @@
 *.tmp
 .env
 .env.*
+.venv
+get_helm.sh
+

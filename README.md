@@ -97,3 +97,40 @@ This holds a fixed request rate for a fixed duration.
 bash scripts/benchmark/guidellm_constant_rate.sh
 RATES="2 6 10 14" MAX_SECONDS=90 bash scripts/benchmark/guidellm_constant_rate.sh
 ```
+
+Installing Prometheus
+
+Add helm repo for prometheus and update it
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+```
+
+Install the Kube-Prometheus-stack
+```bash
+helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \ --namespace monitoring --create-namespace \ --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
+```
+Wait for it to come up
+```bash
+kubectl rollout status deployment/prometheus-grafana -n monitoring --timeout=180s
+kubectl rollout status statefulset/prometheus-prometheus-kube-prometheus-prometheus
+```
+Apply the service monitor and metrics service manifests
+```bash
+kubectl apply -f manifests/monitoring/vllm-metrics-service.yaml
+kubectl apply -f manifests/monitoring/vllm-service-monitor.yaml
+```
+
+Check it VLLM is responding on the model 
+```bash
+VLLM_POD=$(kubectl get pod -n llm-demo -o jsonpath='{.items[0].metadata.name}')
+echo $VLLM_POD
+kubectl exec -n llm-demo $VLLM_POD -- wget -qO- http://localhost:8000/metrics | head -20
+kubectl exec -n llm-demo $VLLM_POD -- wget -qO- http://localhost:8000/metrics | grep "^vllm"
+```
+Check if vllm metrics are flowing through and are available on prometheus
+```bash
+kubectl describe svc vllm-metrics -n llm-demo | grep -E 'Endpoints|Selector'
+kubectl exec -n monitoring $PROM_POD -c prometheus -- \ wget -qO- 'http://localhost:9090/api/v1/query?query=vllm:num_requests_running' | python3 -m json.too
+```
