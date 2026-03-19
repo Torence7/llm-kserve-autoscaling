@@ -4,10 +4,7 @@ CloudLab automatically clones this repo to /local/repository on every node
 before the startup command runs, so there is no git clone step needed.
 
 Instructions:
-Wait for the profile instance to start. The KIND cluster will already be setup or be in the setup phase. Check setup progress after SSH-ing in:
-
-    tail -f /var/log/kserve-setup.log
-    cat  /var/log/kserve-setup.status
+Wait for the profile instance to start. The KIND cluster will already be setup or be in the setup phase. Check setup progress after SSH-ing in: tail -f /var/log/kserve-setup.log or cat  /var/log/kserve-setup.status
 
 """
 
@@ -48,8 +45,6 @@ node.hardware_type = params.nodeType
 node.disk_image = "urn:publicid:IDN+emulab.net+image+emulab-ops:UBUNTU24-64-STD"
 
 # /local/repository is where CloudLab clones the profile repo automatically.
-# We background the setup so the node is marked ready immediately and you
-# can SSH in to watch progress via the log.
 _repo_dir = "/local/repository"
 _cmd = "true"  # no-op if run_setup=False
 
@@ -59,6 +54,6 @@ if params.run_setup:
         " >> /var/log/kserve-setup.log 2>&1"
     ).format(repo=_repo_dir)
 
-node.addService(rspec.Execute(shell="bash", command="( {cmd} ) &".format(cmd=_cmd)))
+node.addService(rspec.Execute(shell="bash", command=_cmd))
 
 pc.printRequestRSpec(request)
