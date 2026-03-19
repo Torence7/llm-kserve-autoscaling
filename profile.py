@@ -55,9 +55,9 @@ _cmd = "true"  # no-op if run_setup=False
 
 if params.run_setup:
     _cmd = (
-        f"bash {_repo_dir}/scripts/cloudlab_setup.sh"
-        f" >> /var/log/kserve-setup.log 2>&1"
-    )
+        "bash {repo}/startup.sh"
+        " >> /var/log/kserve-setup.log 2>&1"
+    ).format(repo=_repo_dir)
 
 node.addService(rspec.Execute(shell="bash", command=f"( {_cmd} ) &"))
 
