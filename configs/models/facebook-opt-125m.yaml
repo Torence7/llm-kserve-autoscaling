@@ -31,12 +31,7 @@ load_test:
   prompt: "Write a short paragraph about systems."
   max_tokens: 120
 
-scaling:
-  min_replicas: 1
-  max_replicas: 5
-  cpu_target_utilization: 50
-  polling_interval: 15
-  cooldown_period: 60
+scaling_policy:  hpa-cpu-baseline
 
 benchmark:
   prompt_tokens: 128

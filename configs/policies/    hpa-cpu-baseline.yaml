@@ -1,0 +1,6 @@
+policy_key: hpa-cpu-baseline
+policy_type: hpa
+
+min_replicas: 1
+max_replicas: 5
+cpu_target_utilization: 50

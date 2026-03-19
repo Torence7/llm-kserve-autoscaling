@@ -1,0 +1,38 @@
+model_key: phi3_mini_4k_instruct
+namespace: llm-demo
+
+llmisvc_name: phi3-mini-4k-instruct
+hf_model_id: microsoft/Phi-3-mini-4k-instruct
+served_model_name: microsoft/Phi-3-mini-4k-instruct
+
+image: quay.io/pierdipi/vllm-cpu:latest
+
+ports:
+  remote: 8000
+  local: 8004
+
+resources:
+  requests:
+    cpu: "2"
+    memory: 12Gi
+  limits:
+    cpu: "6"
+    memory: 20Gi
+
+env:
+  VLLM_LOGGING_LEVEL: INFO
+
+smoke_test:
+  prompt: "Summarize why reactive autoscaling can be slow."
+  max_tokens: 80
+
+load_test:
+  prompt: "Explain the tradeoff between latency and resource cost in LLM serving."
+  max_tokens: 200
+
+scaling_policy:  hpa-cpu-baseline
+
+benchmark:
+  prompt_tokens: 256
+  output_tokens: 160
+  max_seconds: 30

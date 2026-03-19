@@ -1,0 +1,38 @@
+model_key: tinyllama_11b_chat
+namespace: llm-demo
+
+llmisvc_name: tinyllama-1-1b-chat
+hf_model_id: TinyLlama/TinyLlama-1.1B-Chat-v1.0
+served_model_name: TinyLlama/TinyLlama-1.1B-Chat-v1.0
+
+image: quay.io/pierdipi/vllm-cpu:latest
+
+ports:
+  remote: 8000
+  local: 8003
+
+resources:
+  requests:
+    cpu: "2"
+    memory: 8Gi
+  limits:
+    cpu: "4"
+    memory: 16Gi
+
+env:
+  VLLM_LOGGING_LEVEL: INFO
+
+smoke_test:
+  prompt: "What is the purpose of an autoscaler?"
+  max_tokens: 64
+
+load_test:
+  prompt: "Describe how a burst workload affects an LLM serving system."
+  max_tokens: 160
+
+scaling_policy:  hpa-cpu-baseline
+
+benchmark:
+  prompt_tokens: 192
+  output_tokens: 128
+  max_seconds: 30

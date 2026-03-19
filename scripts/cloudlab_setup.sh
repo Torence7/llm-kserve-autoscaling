@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# REPO_URL="https://github.com/Torence7/llm-kserve-autoscaling.git"
-# REPO_DIR="${HOME}/llm-kserve-autoscaling"
-# REPO_BRANCH="main"
+REPO_URL="https://github.com/Torence7/llm-kserve-autoscaling.git"
+REPO_DIR="${HOME}/llm-kserve-autoscaling"
+REPO_BRANCH="main"
 
-# if [[ ! -d "$REPO_DIR/.git" ]]; then
-#   echo "Cloning repo into $REPO_DIR"
-#   git clone --branch "$REPO_BRANCH" "$REPO_URL" "$REPO_DIR"
-# else
-#   echo "Repo already exists at $REPO_DIR"
-#   cd "$REPO_DIR"
-#   git fetch origin
-#   git checkout "$REPO_BRANCH"
-#   git pull origin "$REPO_BRANCH"
-# fi
+if [[ ! -d "$REPO_DIR/.git" ]]; then
+  echo "Cloning repo into $REPO_DIR"
+  git clone --branch "$REPO_BRANCH" "$REPO_URL" "$REPO_DIR"
+else
+  echo "Repo already exists at $REPO_DIR"
+  cd "$REPO_DIR"
+  git fetch origin
+  git checkout "$REPO_BRANCH"
+  git pull origin "$REPO_BRANCH"
+fi
 
-# cd "$REPO_DIR"
-# echo "Now on branch: $(git branch --show-current)"
+cd "$REPO_DIR"
+echo "Now on branch: $(git branch --show-current)"
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"

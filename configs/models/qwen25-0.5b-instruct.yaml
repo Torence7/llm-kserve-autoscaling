@@ -1,0 +1,38 @@
+model_key: qwen25_05b_instruct
+namespace: llm-demo
+
+llmisvc_name: qwen25-0-5b-instruct
+hf_model_id: Qwen/Qwen2.5-0.5B-Instruct
+served_model_name: Qwen/Qwen2.5-0.5B-Instruct
+
+image: quay.io/pierdipi/vllm-cpu:latest
+
+ports:
+  remote: 8000
+  local: 8002
+
+resources:
+  requests:
+    cpu: "1"
+    memory: 6Gi
+  limits:
+    cpu: "3"
+    memory: 12Gi
+
+env:
+  VLLM_LOGGING_LEVEL: INFO
+
+smoke_test:
+  prompt: "Explain autoscaling in two sentences."
+  max_tokens: 64
+
+load_test:
+  prompt: "Write a short explanation of Kubernetes autoscaling."
+  max_tokens: 128
+
+scaling_policy:  hpa-cpu-baseline
+
+benchmark:
+  prompt_tokens: 128
+  output_tokens: 128
+  max_seconds: 30
