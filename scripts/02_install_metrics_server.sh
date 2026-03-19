@@ -7,4 +7,3 @@ kubectl -n kube-system patch deployment metrics-server \
   --type='json' \
   -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]' || true
 kubectl rollout status -n kube-system deployment/metrics-server
-kubectl top nodes

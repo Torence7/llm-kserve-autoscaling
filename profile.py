@@ -49,10 +49,7 @@ _repo_dir = "/local/repository"
 _cmd = "true"  # no-op if run_setup=False
 
 if params.run_setup:
-    _cmd = (
-        "bash {repo}/startup.sh"
-        " >> /var/log/kserve-setup.log 2>&1"
-    ).format(repo=_repo_dir)
+    _cmd = "sudo bash {repo}/startup.sh >> /var/tmp/kserve-setup.log 2>&1".format(repo=_repo_dir)
 
 node.addService(rspec.Execute(shell="bash", command=_cmd))
 
