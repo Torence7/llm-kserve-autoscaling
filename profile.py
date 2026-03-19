@@ -4,7 +4,7 @@ CloudLab automatically clones this repo to /local/repository on every node
 before the startup command runs, so there is no git clone step needed.
 
 Instructions:
-Wait for the profile instance to start. The KIND cluster will already be setup or be in the setup phase. Check setup progress after SSH-ing in: tail -f /var/log/kserve-setup.log or cat  /var/log/kserve-setup.status
+Wait for the profile instance to start. The KIND cluster will already be setup or be in the setup phase. Check setup progress after SSH-ing in: tail -f /var/tmp/kserve-setup.log or cat  /var/tmp/kserve-setup.status
 
 """
 
