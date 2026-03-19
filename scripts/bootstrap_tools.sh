@@ -35,3 +35,10 @@ echo "[00] Versions:"
 kubectl version --client
 kind version
 helm version
+
+# yq
+if ! command -v yq >/dev/null 2>&1; then
+  echo "[00] Installing yq"
+  sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+  sudo chmod +x /usr/local/bin/yq
+fi

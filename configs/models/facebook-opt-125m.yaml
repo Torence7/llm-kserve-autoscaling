@@ -1,0 +1,39 @@
+model_key: opt125m
+namespace: llm-demo
+
+llmisvc_name: facebook-opt-125m
+hf_model_id: facebook/opt-125m
+served_model_name: facebook/opt-125m
+
+image: quay.io/pierdipi/vllm-cpu:latest
+replicas: 1
+
+ports:
+  remote: 8000
+  local: 8001
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: 4Gi
+  limits:
+    cpu: "2"
+    memory: 10Gi
+
+env:
+  VLLM_LOGGING_LEVEL: INFO
+
+smoke_test:
+  prompt: "Who are you?"
+  max_tokens: 40
+
+load_test:
+  prompt: "Write a short paragraph about systems."
+  max_tokens: 120
+
+scaling_policy:  hpa-cpu-baseline
+
+benchmark:
+  prompt_tokens: 128
+  output_tokens: 128
+  max_seconds: 30

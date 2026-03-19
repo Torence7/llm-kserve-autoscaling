@@ -1,136 +1,195 @@
-# OPT-125M on KServe (CloudLab)
+# LLM KServe Autoscaling
 
-Reproducible baseline deployment of OPT-125M (vLLM CPU) on Kubernetes via KServe + LLMInferenceService.
-Then establish a reactive autoscaling baseline (CPU HPA).
+Config-driven deployment and autoscaling experiments for LLM serving on Kubernetes using **KServe**, **LLMInferenceService**, **vLLM**, **HPA**, and **KEDA**.
 
-SSH into CloudLab node, then:
+This repo is set up so that:
+- **model-specific details live in `configs/models/`**
+- **scripts are generic and take `--model <key|path>`**
+- **the same workflow can be reused across different models**
+- **deployment, smoke testing, load generation, and scaling are all driven from one model config**
+
+The initial example model is **OPT-125M on vLLM CPU**, but the goal of the repo is to support multiple models without rewriting scripts.
+
+
+# # Quick start
+1. Clone the repo
 ```bash
-git clone git@github.com:<USERNAME>/llm-kserve-autoscaling.git
+git clone git@github.com:<YOUR-USERNAME>/llm-kserve-autoscaling.git
 cd llm-kserve-autoscaling
 ```
-
-## CloudLab setup (all at once)
-SSH into CloudLab node, then:
-
+2. Run the all-in-one CloudLab bootstrap
 ```bash
 bash scripts/cloudlab_setup.sh
 ```
 
-#### CloudLab setup (script by script)
+This sets up the cluster and serving stack. After that, you can use the generic scripts below.
 
-After SSH’ing into your CloudLab node, check if Docker/Git are installed:
+##  Manual setup, step by step
 
+If you want to run everything manually instead of using the one-shot setup script, use this flow.
+
+1. Bootstrap local tools
 ```bash
-docker --version || true
-git --version || true
+bash scripts/bootstrap_tools.sh
+```
+2. Create the kind cluster
+```bash
+bash scripts/create_kind_cluster.sh
+```
+3. Install metrics server
+```bash
+bash scripts/install_metrics_server.sh
+```
+4. Install the KServe / LLMInferenceService stack
+```bash
+bash scripts/install_llmisvc_stack.sh
+```
+5. Verify the stack
+```bash
+bash scripts/verify_llmisvc.sh
+```
+6. Apply any required LLM presets
+```bash
+bash scripts/apply_llm_presets.sh
+```
+7. Deploy a model with a model key
+```bash
+bash scripts/deploy_model.sh --model facebook-opt-125m
+```
+8. Wait for pods to become ready
+```bash
+bash scripts/wait_pods.sh
 ```
 
-If Docker is missing, install it:
+If a worker gets stuck due to probe timing, you can patch probes if needed:
 ```bash
-sudo apt-get update
-sudo apt-get install -y docker.io git curl
-sudo systemctl enable --now docker
-
-# Allow non-root docker
-sudo usermod -aG docker $USER
-
-# IMPORTANT: refresh your session so group membership takes effect
-exit   # then SSH back in
-
-# Verify
-groups
-docker ps
-docker run hello-world
+bash scripts/patch_worker_probes.sh
 ```
 
+## Port-forwarding
+
+To send local requests to the deployed model:
 ```bash
-bash scripts/00_bootstrap_tools.sh
-bash scripts/01_create_kind_cluster.sh
-bash scripts/02_install_metrics_server.sh
-bash scripts/03_install_llmisvc_stack.sh
-bash scripts/03b_verify_llmisvc.sh
-bash scripts/04_apply_llm_presets.sh
-bash scripts/05_deploy_llm_opt125m.sh
+bash scripts/portforward_model.sh --model facebook-opt-125m
+```
+This port-forwards the selected model’s workload service to the local port specified in the model config.
 
-# If worker is stuck at 0/1 due to probe timing, run:
-bash scripts/07_patch_worker_probes.sh
+Keep this running in its own terminal.
 
-# Wait for pods:
-bash scripts/06_wait_pods.sh
+## Quick Tests
+### Smoke testing
+
+In another terminal, run:
+```bash
+bash scripts/smoke_test.sh --model facebook-opt-125m
 ```
 
-Run with test  input:
-```bash
-bash scripts/08_portforward_opt.sh
+### Load generation
 
-bash scripts/09_curl_opt.sh
+To continuously send requests and create load:
+```bash
+bash scripts/load_test.sh --model facebook-opt-125m
 ```
 
-Autoscaling HPA Baseline
+## KEDA autoscaling
+1. Install KEDA
 ```bash
-bash scripts/10_create_hpa_baseline.sh
-bash scripts/11_load_test.sh
+bash scripts/install_keda.sh
+```
+2. Apply the ScaledObject for the selected model
+```bash
+bash scripts/apply_keda_scaledobject.sh --model facebook-opt-125m
+```
+3. Verify KEDA resources
+```bash
+bash scripts/verify_keda.sh
+```
+4. Watch scaling live
+```bash
+bash scripts/watch_keda_scaling.sh
 ```
 
-KEDA Setup
-```bash
-bash  scripts/12_install_keda.sh
-bash scripts/13_apply_keda_scaledobject.sh
-bash scripts/14_verify_keda.sh
-bash scripts/15_watch_keda_scaling.sh
-```
-
-Install GuideLLM
+## Benchmarking with GuideLLM
+1. Install GuideLLM into the repo virtual environment
 ```bash
 bash scripts/benchmark/install_guidellm.sh
 ```
+2. Run a sweep benchmark
 
-Benchmark option A: Sweep
-This runs multiple stages and increases load each stage to find saturation.
+This increases pressure across stages to find saturation:
 ```bash
-bash scripts/benchmark/guidellm_sweep.sh
+bash scripts/benchmark/guidellm_sweep.sh --model facebook-opt-125m
+```
+3. Run a constant-rate benchmark
+```bash
+bash scripts/benchmark/guidellm_constant_rate.sh --model facebook-opt-125m
+```
+You can override values as needed:
+```bash
+RATE=2 \
+MAX_SECONDS=90 \
+bash scripts/benchmark/guidellm_constant_rate.sh --model facebook-opt-125m
 ```
 
-Benchmark option B: Constant rate
-This holds a fixed request rate for a fixed duration.
-```bash
-bash scripts/benchmark/guidellm_constant_rate.sh
-RATES="2 6 10 14" MAX_SECONDS=90 bash scripts/benchmark/guidellm_constant_rate.sh
-```
+Benchmark defaults such as prompt tokens, output tokens, and duration are read from the model config.
 
-Installing Prometheus
-
-Add helm repo for prometheus and update it
-
+## Monitoring with Prometheus
+1. Add the Helm repo
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 ```
-
-Install the Kube-Prometheus-stack
+2. Install kube-prometheus-stack
 ```bash
-helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \ --namespace monitoring --create-namespace \ --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
+helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --create-namespace \
+  --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
 ```
-Wait for it to come up
+3. Wait for Prometheus and Grafana
 ```bash
 kubectl rollout status deployment/prometheus-grafana -n monitoring --timeout=180s
-kubectl rollout status statefulset/prometheus-prometheus-kube-prometheus-prometheus
+kubectl rollout status statefulset/prometheus-prometheus-kube-prometheus-prometheus -n monitoring --timeout=180s
 ```
-Apply the service monitor and metrics service manifests
+4. Apply monitoring manifests
 ```bash
 kubectl apply -f manifests/monitoring/vllm-metrics-service.yaml
 kubectl apply -f manifests/monitoring/vllm-service-monitor.yaml
 ```
-
-Check it VLLM is responding on the model 
+5. Check whether the model exposes vLLM metrics
 ```bash
 VLLM_POD=$(kubectl get pod -n llm-demo -o jsonpath='{.items[0].metadata.name}')
-echo $VLLM_POD
-kubectl exec -n llm-demo $VLLM_POD -- wget -qO- http://localhost:8000/metrics | head -20
-kubectl exec -n llm-demo $VLLM_POD -- wget -qO- http://localhost:8000/metrics | grep "^vllm"
+echo "$VLLM_POD"
+
+kubectl exec -n llm-demo "$VLLM_POD" -- wget -qO- http://localhost:8000/metrics | head -20
+kubectl exec -n llm-demo "$VLLM_POD" -- wget -qO- http://localhost:8000/metrics | grep "^vllm"
 ```
-Check if vllm metrics are flowing through and are available on prometheus
+6. Check whether Prometheus sees the metrics
 ```bash
 kubectl describe svc vllm-metrics -n llm-demo | grep -E 'Endpoints|Selector'
-kubectl exec -n monitoring $PROM_POD -c prometheus -- \ wget -qO- 'http://localhost:9090/api/v1/query?query=vllm:num_requests_running' | python3 -m json.too
 ```
+If you want to query Prometheus directly, first find the Prometheus pod:
+```bash
+PROM_POD=$(kubectl get pod -n monitoring -l app.kubernetes.io/name=prometheus -o jsonpath='{.items[0].metadata.name}')
+echo "$PROM_POD"
+```
+
+Then query:
+```bash
+kubectl exec -n monitoring "$PROM_POD" -c prometheus -- \
+  wget -qO- 'http://localhost:9090/api/v1/query?query=vllm:num_requests_running' | python3 -m json.tool
+```
+## Adding another model
+
+To support a new model:
+
+create a new YAML file in configs/models/
+
+fill in the model-specific values
+
+run the same generic scripts with --model <new-model>
+
+
+
+
+
