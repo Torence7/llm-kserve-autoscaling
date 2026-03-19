@@ -8,13 +8,12 @@ source "${SCRIPT_DIR}/lib/model.sh"
 usage() {
   cat <<EOF
 Usage:
-  bash scripts/load_test.sh --model <key|path>
+  bash scripts/smoke_test.sh --model <key|path>
 
 Optional overrides:
   TARGET=http://localhost:8001/v1
-  PROMPT="..."
-  MAX_TOKENS=120
-  SLEEP_SECONDS=0
+  PROMPT="Who are you?"
+  MAX_TOKENS=40
 EOF
 }
 
@@ -31,20 +30,14 @@ done
 load_model_config "$MODEL_ARG"
 
 TARGET="${TARGET:-http://localhost:${LOCAL_PORT}/v1}"
-PROMPT="${PROMPT:-$LOAD_PROMPT}"
-MAX_TOKENS="${MAX_TOKENS:-$LOAD_MAX_TOKENS}"
-SLEEP_SECONDS="${SLEEP_SECONDS:-0}"
+PROMPT="${PROMPT:-$SMOKE_PROMPT}"
+MAX_TOKENS="${MAX_TOKENS:-$SMOKE_MAX_TOKENS}"
 
-log "Load loop against ${TARGET}/completions (Ctrl+C to stop)"
-while true; do
-  curl -sS -X POST "${TARGET}/completions" \
-    -H 'Content-Type: application/json' \
-    -d "$(cat <<EOF
+log "Smoke test -> ${TARGET}/completions"
+curl -sS -X POST "${TARGET}/completions" \
+  -H 'Content-Type: application/json' \
+  -d "$(cat <<EOF
 {"model":"${SERVED_MODEL_NAME}","prompt":"${PROMPT}","max_tokens":${MAX_TOKENS}}
 EOF
-)" >/dev/null || true
-
-  if [[ "$SLEEP_SECONDS" != "0" ]]; then
-    sleep "$SLEEP_SECONDS"
-  fi
-done
+)"
+echo

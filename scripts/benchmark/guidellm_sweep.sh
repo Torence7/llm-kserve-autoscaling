@@ -1,77 +1,74 @@
-\#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 
-# GuideLLM "sweep" = automatically explores increasing load/rates to find limits.
-# Uses OpenAI *completions* endpoint to avoid chat-template issues for OPT.
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
+source "${REPO_ROOT}/scripts/lib/common.sh"
+source "${REPO_ROOT}/scripts/lib/model.sh"
 
-NS="${NS:-llm-demo}"
-SVC="${SVC:-facebook-opt-125m-kserve-workload-svc}"
-REMOTE_PORT="${REMOTE_PORT:-8000}"
+usage() {
+  cat <<EOF
+Usage:
+  bash scripts/benchmark/guidellm_sweep.sh --model <key|path>
 
-MODEL="${MODEL:-facebook/opt-125m}"
-
-# Benchmark knobs
-PROMPT_TOKENS="${PROMPT_TOKENS:-128}"
-OUTPUT_TOKENS="${OUTPUT_TOKENS:-128}"
-MAX_SECONDS="${MAX_SECONDS:-30}"
-OUTDIR_BASE="${OUTDIR_BASE:-results/guidellm}"
-
-pick_port() {
-  for p in 8001 8002 8003 18001 18002 18003; do
-    if ! lsof -iTCP:"$p" -sTCP:LISTEN >/dev/null 2>&1; then
-      echo "$p"
-      return 0
-    fi
-  done
-  # last resort: random high port
-  python3 - <<'PY'
-import random
-print(random.randint(20000, 40000))
-PY
+Optional overrides:
+  TARGET=http://localhost:8001/v1
+  PROMPT_TOKENS=128
+  OUTPUT_TOKENS=128
+  MAX_SECONDS=30
+  OUTFILE=results/guidellm/sweep.json
+EOF
 }
 
-LOCAL_PORT="$(pick_port)"
-BASE_URL="http://localhost:${LOCAL_PORT}"
+MODEL_ARG=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --model) MODEL_ARG="${2:-}"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) die "Unknown argument: $1" ;;
+  esac
+done
 
-echo "[21] Port-forward svc/${SVC} (${NS}) -> ${BASE_URL}"
-kubectl -n "${NS}" port-forward "svc/${SVC}" "${LOCAL_PORT}:${REMOTE_PORT}" >/tmp/portforward_guidellm.log 2>&1 &
-PF_PID=$!
+[[ -n "$MODEL_ARG" ]] || { usage; exit 1; }
+load_model_config "$MODEL_ARG"
 
-cleanup() {
-  echo "[21] Cleaning up port-forward (pid=${PF_PID})"
-  kill "${PF_PID}" >/dev/null 2>&1 || true
-}
-trap cleanup EXIT
+cd "$REPO_ROOT"
+[[ -f ".venv/bin/activate" ]] || die "Missing .venv. Run: bash scripts/benchmark/install_guidellm.sh"
+# shellcheck disable=SC1091
+source ".venv/bin/activate"
 
-# give port-forward a moment
-sleep 2
+need_cmd guidellm
 
-# quick sanity check (should return model list or 200/404 depending on server routing)
-curl -s "${BASE_URL}/v1/models" >/dev/null || true
+TARGET="${TARGET:-http://localhost:${LOCAL_PORT}/v1}"
+PROMPT_TOKENS="${PROMPT_TOKENS:-$BENCHMARK_PROMPT_TOKENS}"
+OUTPUT_TOKENS="${OUTPUT_TOKENS:-$BENCHMARK_OUTPUT_TOKENS}"
+MAX_SECONDS="${MAX_SECONDS:-$BENCHMARK_MAX_SECONDS}"
+OUTFILE="${OUTFILE:-results/guidellm/${MODEL_KEY}_sweep.json}"
 
-TS="$(date +%Y%m%d_%H%M%S)"
-OUTDIR="${OUTDIR_BASE}/sweep_${TS}"
-mkdir -p "${OUTDIR}"
+mkdir -p "$(dirname "$OUTFILE")"
 
-echo "[21] Running GuideLLM sweep:"
-echo "     target=${BASE_URL}/v1"
-echo "     request-type=completions"
-echo "     model=${MODEL}"
-echo "     data=prompt_tokens=${PROMPT_TOKENS},output_tokens=${OUTPUT_TOKENS}"
-echo "     max-seconds=${MAX_SECONDS}"
-echo "     outdir=${OUTDIR}"
-echo
+MODEL_FLAG=()
+if guidellm benchmark --help 2>&1 | grep -q -- '--processor'; then
+  MODEL_FLAG=(--processor "$SERVED_MODEL_NAME")
+elif guidellm benchmark --help 2>&1 | grep -q -- '--model'; then
+  MODEL_FLAG=(--model "$SERVED_MODEL_NAME")
+fi
 
-# NOTE: GuideLLM accepts --profile sweep and synthetic data as key=value pairs (README).
-guidellm benchmark run \
-  --target "${BASE_URL}/v1" \
-  --request-type completions \
-  --profile sweep \
-  --max-seconds "${MAX_SECONDS}" \
+EXTRA_FLAGS=()
+if guidellm benchmark --help 2>&1 | grep -q -- '--detect-saturation'; then
+  EXTRA_FLAGS+=(--detect-saturation)
+fi
+
+log "GuideLLM sweep benchmark"
+log "target=${TARGET} model=${SERVED_MODEL_NAME}"
+
+guidellm benchmark \
+  --target "$TARGET" \
+  "${MODEL_FLAG[@]}" \
+  --rate-type sweep \
+  --max-seconds "$MAX_SECONDS" \
   --data "prompt_tokens=${PROMPT_TOKENS},output_tokens=${OUTPUT_TOKENS}" \
-  --model "${MODEL}" \
-  --outputs json,csv,html \
-  --output-dir "${OUTDIR}"
+  "${EXTRA_FLAGS[@]}" \
+  --output "$OUTFILE"
 
-echo
-echo "[21] Done. Outputs in: ${OUTDIR}"
+log "Saved results to ${OUTFILE}"

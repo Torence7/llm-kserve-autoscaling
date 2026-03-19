@@ -1,30 +1,44 @@
-apiVersion: serving.kserve.io/v1alpha1
-kind: LLMInferenceService
-metadata:
-  name: facebook-opt-125m
-  namespace: llm-demo
-spec:
-  model:
-    uri: hf://facebook/opt-125m
-    name: facebook/opt-125m
-  replicas: 1
-  template:
-    containers:
-      - name: main
-        image: quay.io/pierdipi/vllm-cpu:latest
-        securityContext:
-          runAsNonRoot: false
-        env:
-          - name: VLLM_LOGGING_LEVEL
-            value: INFO
-        resources:
-          requests:
-            cpu: "500m"
-            memory: 4Gi
-          limits:
-            cpu: "2"
-            memory: 10Gi
-  router:
-    gateway: {}
-    route: {}
-    scheduler: {}
+model_key: opt125m
+namespace: llm-demo
+
+llmisvc_name: facebook-opt-125m
+hf_model_id: facebook/opt-125m
+served_model_name: facebook/opt-125m
+
+image: quay.io/pierdipi/vllm-cpu:latest
+replicas: 1
+
+ports:
+  remote: 8000
+  local: 8001
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: 4Gi
+  limits:
+    cpu: "2"
+    memory: 10Gi
+
+env:
+  VLLM_LOGGING_LEVEL: INFO
+
+smoke_test:
+  prompt: "Who are you?"
+  max_tokens: 40
+
+load_test:
+  prompt: "Write a short paragraph about systems."
+  max_tokens: 120
+
+scaling:
+  min_replicas: 1
+  max_replicas: 5
+  cpu_target_utilization: 50
+  polling_interval: 15
+  cooldown_period: 60
+
+benchmark:
+  prompt_tokens: 128
+  output_tokens: 128
+  max_seconds: 30
