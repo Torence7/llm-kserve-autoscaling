@@ -59,6 +59,6 @@ if params.run_setup:
         " >> /var/log/kserve-setup.log 2>&1"
     ).format(repo=_repo_dir)
 
-node.addService(rspec.Execute(shell="bash", command=f"( {_cmd} ) &"))
+node.addService(rspec.Execute(shell="bash", command="( {cmd} ) &".format(cmd=_cmd)))
 
 pc.printRequestRSpec(request)
