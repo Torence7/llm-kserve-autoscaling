@@ -22,8 +22,8 @@ pc.defineParameter(
     portal.ParameterType.STRING,
     "c220g2",
     [
-        ("c220g2", "c220g2 (Wisc) — 2x10-core E5-2660v3, 160 GB RAM, 2x480 GB SSD"),
-        ("c220g5", "c220g5 (Wisc) — 2x20-core Gold 6148,  384 GB RAM, 2x960 GB SSD"),
+        ("c220g2", "c220g2 (Wisc) - 2x10-core E5-2660v3, 160 GB RAM, 2x480 GB SSD"),
+        ("c220g5", "c220g5 (Wisc) - 2x20-core Gold 6148,  384 GB RAM, 2x960 GB SSD"),
     ],
 )
 
