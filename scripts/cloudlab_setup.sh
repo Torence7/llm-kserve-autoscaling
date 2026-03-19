@@ -1,6 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# REPO_URL="https://github.com/Torence7/llm-kserve-autoscaling.git"
+# REPO_DIR="${HOME}/llm-kserve-autoscaling"
+# REPO_BRANCH="main"
+
+# if [[ ! -d "$REPO_DIR/.git" ]]; then
+#   echo "Cloning repo into $REPO_DIR"
+#   git clone --branch "$REPO_BRANCH" "$REPO_URL" "$REPO_DIR"
+# else
+#   echo "Repo already exists at $REPO_DIR"
+#   cd "$REPO_DIR"
+#   git fetch origin
+#   git checkout "$REPO_BRANCH"
+#   git pull origin "$REPO_BRANCH"
+# fi
+
+# cd "$REPO_DIR"
+# echo "Now on branch: $(git branch --show-current)"
+
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 
@@ -46,6 +64,55 @@ run_script() {
   bash "${REPO_ROOT}/scripts/$script" "$@"
 }
 
+ensure_docker_ready() {
+  if ! command -v docker >/dev/null 2>&1; then
+    die "Docker is not installed or not on PATH. Check scripts/bootstrap_tools.sh."
+  fi
+
+  # Start docker if it exists but is not running
+  if command -v systemctl >/dev/null 2>&1; then
+    if ! sudo systemctl is-active --quiet docker; then
+      log "Docker service is not active. Starting docker..."
+      sudo systemctl start docker || true
+    fi
+    sudo systemctl enable docker >/dev/null 2>&1 || true
+  fi
+
+  # First check if current shell already has access
+  if docker ps >/dev/null 2>&1; then
+    log "Docker is installed and accessible."
+    return 0
+  fi
+
+  # Try to add user to docker group if needed
+  if ! id -nG "$USER" | grep -qw docker; then
+    log "Adding $USER to docker group..."
+    sudo usermod -aG docker "$USER" || true
+  fi
+
+  # Re-check current shell
+  if docker ps >/dev/null 2>&1; then
+    log "Docker is now accessible."
+    return 0
+  fi
+
+  cat <<EOF
+Docker is installed, but the current shell cannot access the Docker daemon.
+
+This usually means the docker group membership has not been applied to the current session yet.
+
+Run:
+  newgrp docker
+
+Then verify:
+  docker ps
+
+After that, rerun:
+  bash scripts/cloudlab_setup.sh --model ${MODEL}
+EOF
+  exit 1
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --model)
@@ -88,6 +155,8 @@ if have_script "bootstrap_tools.sh"; then
 else
   log "Skipping bootstrap_tools.sh (not present)"
 fi
+
+ensure_docker_ready
 
 run_script "create_kind_cluster.sh"
 run_script "install_metrics_server.sh"

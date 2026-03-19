@@ -46,7 +46,6 @@ spec:
   model:
     uri: hf://${HF_MODEL_ID}
     name: ${SERVED_MODEL_NAME}
-    replicas: ${REPLICAS}
   template:
     containers:
       - name: main

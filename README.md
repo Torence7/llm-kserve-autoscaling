@@ -52,7 +52,7 @@ bash scripts/verify_llmisvc.sh
 ```bash
 bash scripts/apply_llm_presets.sh
 ```
-7. Deploy a model
+7. Deploy a model with a model key
 ```bash
 bash scripts/deploy_model.sh --model facebook-opt-125m
 ```
@@ -66,16 +66,6 @@ If a worker gets stuck due to probe timing, you can patch probes if needed:
 bash scripts/patch_worker_probes.sh
 ```
 
-
-###  Running with a model key
-
-If your config ismconfigs/models/facebook-opt-125m.yaml you can reference it as:
-```bash
-bash scripts/deploy_model.sh --model facebook-opt-125m
-```
-
-
-
 ## Port-forwarding
 
 To send local requests to the deployed model:
@@ -86,14 +76,15 @@ This port-forwards the selected model’s workload service to the local port spe
 
 Keep this running in its own terminal.
 
-## Smoke testing
+## Quick Tests
+### Smoke testing
 
 In another terminal, run:
 ```bash
 bash scripts/smoke_test.sh --model facebook-opt-125m
 ```
 
-## Load generation
+### Load generation
 
 To continuously send requests and create load:
 ```bash

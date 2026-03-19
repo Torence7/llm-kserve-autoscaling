@@ -54,8 +54,8 @@ spec:
   cooldownPeriod: ${COOLDOWN_PERIOD}
   triggers:
     - type: cpu
+      metricType: Utilization
       metadata:
-        type: Utilization
         value: "${CPU_TARGET_UTILIZATION}"
 EOF
 

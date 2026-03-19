@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
+
 # shellcheck source=../lib/common.sh
 source "${REPO_ROOT}/scripts/lib/common.sh"
 # shellcheck source=../lib/model.sh
@@ -51,23 +52,52 @@ OUTFILE="${OUTFILE:-results/guidellm/${MODEL_KEY}_constant.json}"
 
 mkdir -p "$(dirname "$OUTFILE")"
 
+GUIDE_HELP="$(guidellm --help 2>&1 || true)"
+
 MODEL_FLAG=()
-if guidellm benchmark --help 2>&1 | grep -q -- '--processor'; then
+if grep -q -- '--processor' <<<"$GUIDE_HELP"; then
   MODEL_FLAG=(--processor "$SERVED_MODEL_NAME")
-elif guidellm benchmark --help 2>&1 | grep -q -- '--model'; then
+elif grep -q -- '--model' <<<"$GUIDE_HELP"; then
   MODEL_FLAG=(--model "$SERVED_MODEL_NAME")
+fi
+
+OUTPUT_FLAG=()
+if grep -q -- '--output-dir' <<<"$GUIDE_HELP" && grep -q -- '--outputs' <<<"$GUIDE_HELP"; then
+  OUTPUT_DIR="$(dirname "$OUTFILE")"
+  OUTPUT_NAME="$(basename "$OUTFILE")"
+  OUTPUT_FLAG=(--output-dir "$OUTPUT_DIR" --outputs "$OUTPUT_NAME")
+elif grep -q -- '--output-path' <<<"$GUIDE_HELP"; then
+  OUTPUT_FLAG=(--output-path "$OUTFILE")
+elif grep -q -- '--output ' <<<"$GUIDE_HELP" || grep -q -- '--output$' <<<"$GUIDE_HELP"; then
+  OUTPUT_FLAG=(--output "$OUTFILE")
+else
+  OUTPUT_FLAG=()
+fi
+
+RATE_FLAG=()
+if grep -q -- '--profile' <<<"$GUIDE_HELP"; then
+  RATE_FLAG=(--profile constant)
+else
+  RATE_FLAG=(--rate-type constant)
+fi
+
+DATA_TYPE_FLAG=()
+if grep -q -- '--data-type' <<<"$GUIDE_HELP"; then
+  DATA_TYPE_FLAG=(--data-type emulated)
 fi
 
 log "GuideLLM constant-rate benchmark"
 log "target=${TARGET} model=${SERVED_MODEL_NAME} rate=${RATE}"
+log "outfile=${OUTFILE}"
 
-guidellm benchmark \
+guidellm \
   --target "$TARGET" \
   "${MODEL_FLAG[@]}" \
-  --rate-type constant \
+  "${DATA_TYPE_FLAG[@]}" \
+  --data "prompt_tokens=${PROMPT_TOKENS},generated_tokens=${OUTPUT_TOKENS}" \
+  "${RATE_FLAG[@]}" \
   --rate "$RATE" \
   --max-seconds "$MAX_SECONDS" \
-  --data "prompt_tokens=${PROMPT_TOKENS},output_tokens=${OUTPUT_TOKENS}" \
-  --output "$OUTFILE"
+  "${OUTPUT_FLAG[@]}"
 
 log "Saved results to ${OUTFILE}"
