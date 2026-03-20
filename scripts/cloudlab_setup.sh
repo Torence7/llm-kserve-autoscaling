@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO_URL="https://github.com/Torence7/llm-kserve-autoscaling.git"
-REPO_DIR="${HOME}/llm-kserve-autoscaling"
+REPO_DIR="${REPO_DIR:-${HOME}/llm-kserve-autoscaling}"
 REPO_BRANCH="main"
 
 if [[ ! -d "$REPO_DIR/.git" ]]; then
