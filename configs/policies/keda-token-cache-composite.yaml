@@ -1,0 +1,54 @@
+policy_key: keda-token-cache-composite
+policy_type: keda-composite
+
+min_replicas: 1
+max_replicas: 10
+polling_interval: 10
+cooldown_period: 60
+
+prometheus:
+  server_address: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+
+advanced:
+  scaling_modifiers:
+    formula: "(token_workload * 0.6) + (waiting * 0.2) + (kv_cache_pct * 0.2)"
+    target: "100"
+    activation_target: "25"
+
+triggers:
+  - name: token_workload
+    metric_name: vllm_token_workload
+    query: |
+      (
+        sum(
+          rate(vllm:prompt_tokens_total{namespace="llm-demo"}[1m])
+        )
+      )
+      +
+      0.5 *
+      (
+        sum(
+          rate(vllm:generation_tokens_total{namespace="llm-demo"}[1m])
+        )
+      )
+    threshold: "800"
+    activation_threshold: "200"
+
+  - name: waiting
+    metric_name: vllm_waiting_requests
+    query: |
+      sum(
+        vllm:num_requests_waiting{namespace="llm-demo"}
+      )
+    threshold: "4"
+    activation_threshold: "1"
+
+  - name: kv_cache_pct
+    metric_name: vllm_kv_cache_usage_percent
+    query: |
+      100 *
+      avg(
+        vllm:gpu_cache_usage_perc{namespace="llm-demo"}
+      )
+    threshold: "75"
+    activation_threshold: "40"

@@ -14,7 +14,7 @@ resolve_model_file() {
   local root
   root="$(repo_root)"
 
-  [[ -n "$arg" ]] || die "Usage: --model <key|path>"
+  [[ -n "$arg" ]] || die "Usage: load_model_config --model <name|path>"
 
   if [[ -f "$arg" ]]; then
     echo "$arg"
@@ -29,7 +29,69 @@ resolve_model_file() {
   die "Could not resolve model config: $arg"
 }
 
-# usage: load_model_config <key-or-path>
+resolve_policy_file() {
+  local policy_key="${1:-}"
+  local root
+  root="$(repo_root)"
+
+  [[ -n "$policy_key" ]] || die "Policy key is empty"
+
+  if [[ -f "$policy_key" ]]; then
+    echo "$policy_key"
+    return 0
+  fi
+
+  if [[ -f "${root}/configs/policies/${policy_key}.yaml" ]]; then
+    echo "${root}/configs/policies/${policy_key}.yaml"
+    return 0
+  fi
+
+  die "Could not resolve policy config: $policy_key"
+}
+
+yaml_get_or_default() {
+  local expr="$1"
+  local file="$2"
+  local default_value="${3:-}"
+
+  local value
+  value="$(yq -r "${expr} // \"__NULL__\"" "$file" 2>/dev/null || true)"
+
+  if [[ -z "$value" || "$value" == "__NULL__" || "$value" == "null" ]]; then
+    echo "$default_value"
+  else
+    echo "$value"
+  fi
+}
+
+load_policy_config() {
+  local policy_key="${1:-}"
+  [[ -n "$policy_key" ]] || die "load_policy_config requires a policy key"
+
+  POLICY_FILE="$(resolve_policy_file "$policy_key")"
+  POLICY_KEY="$(yaml_get_or_default '.policy_key' "$POLICY_FILE" "$policy_key")"
+  POLICY_TYPE="$(yaml_get_or_default '.policy_type' "$POLICY_FILE" "keda-prometheus")"
+
+  MIN_REPLICAS="$(yaml_get_or_default '.min_replicas' "$POLICY_FILE" "1")"
+  MAX_REPLICAS="$(yaml_get_or_default '.max_replicas' "$POLICY_FILE" "5")"
+  POLLING_INTERVAL="$(yaml_get_or_default '.polling_interval' "$POLICY_FILE" "15")"
+  COOLDOWN_PERIOD="$(yaml_get_or_default '.cooldown_period' "$POLICY_FILE" "60")"
+
+  CPU_TARGET_UTILIZATION="$(yaml_get_or_default '.cpu_target_utilization' "$POLICY_FILE" "50")"
+
+  PROMETHEUS_SERVER_ADDRESS="$(yaml_get_or_default '.prometheus.server_address' "$POLICY_FILE" "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090")"
+  PROMETHEUS_METRIC_NAME="$(yaml_get_or_default '.prometheus.metric_name' "$POLICY_FILE" "")"
+  PROMETHEUS_QUERY="$(yaml_get_or_default '.prometheus.query' "$POLICY_FILE" "")"
+  THRESHOLD="$(yaml_get_or_default '.prometheus.threshold' "$POLICY_FILE" "")"
+  ACTIVATION_THRESHOLD="$(yaml_get_or_default '.prometheus.activation_threshold' "$POLICY_FILE" "")"
+
+  SCALING_MODIFIER_TARGET="$(yaml_get_or_default '.advanced.scaling_modifiers.target' "$POLICY_FILE" "")"
+  SCALING_MODIFIER_ACTIVATION_TARGET="$(yaml_get_or_default '.advanced.scaling_modifiers.activation_target' "$POLICY_FILE" "")"
+  SCALING_MODIFIER_FORMULA="$(yaml_get_or_default '.advanced.scaling_modifiers.formula' "$POLICY_FILE" "")"
+
+  TRIGGERS_COUNT="$(yq -r '(.triggers // []) | length' "$POLICY_FILE" 2>/dev/null || echo "0")"
+}
+
 load_model_config() {
   need_model_tools
 
@@ -38,59 +100,45 @@ load_model_config() {
   local default_name
   default_name="$(basename "$MODEL_FILE" .yaml)"
 
-  MODEL_KEY="$(yq -r '.model_key // "'"${default_name}"'"' "$MODEL_FILE")"
-  NAMESPACE="$(yq -r '.namespace // .metadata.namespace // "llm-demo"' "$MODEL_FILE")"
+  MODEL_KEY="$(yaml_get_or_default '.model_key' "$MODEL_FILE" "$default_name")"
+  NAMESPACE="$(yaml_get_or_default '.namespace' "$MODEL_FILE" "llm-demo")"
+  LLMISVC_NAME="$(yaml_get_or_default '.llmisvc_name' "$MODEL_FILE" "$default_name")"
 
-  LLMISVC_NAME="$(yq -r '.llmisvc_name // .metadata.name // "'"${default_name}"'"' "$MODEL_FILE")"
-  HF_MODEL_ID="$(yq -r '.hf_model_id // (.spec.model.uri | sub("^hf://"; "")) // ""' "$MODEL_FILE")"
-  SERVED_MODEL_NAME="$(yq -r '.served_model_name // .spec.model.name // .hf_model_id // ""' "$MODEL_FILE")"
+  HF_MODEL_ID="$(yaml_get_or_default '.hf_model_id' "$MODEL_FILE" "")"
+  SERVED_MODEL_NAME="$(yaml_get_or_default '.served_model_name' "$MODEL_FILE" "$HF_MODEL_ID")"
+  IMAGE="$(yaml_get_or_default '.image' "$MODEL_FILE" "")"
+  REPLICAS="$(yaml_get_or_default '.replicas' "$MODEL_FILE" "1")"
 
-  IMAGE="$(yq -r '.image // .spec.template.containers[0].image // ""' "$MODEL_FILE")"
-  REPLICAS="$(yq -r '.replicas // .spec.model.replicas // 1' "$MODEL_FILE")"
+  REMOTE_PORT="$(yaml_get_or_default '.ports.remote' "$MODEL_FILE" "8000")"
+  LOCAL_PORT="$(yaml_get_or_default '.ports.local' "$MODEL_FILE" "8001")"
 
-  REMOTE_PORT="$(yq -r '.ports.remote // 8000' "$MODEL_FILE")"
-  LOCAL_PORT="$(yq -r '.ports.local // 8001' "$MODEL_FILE")"
+  REQUESTS_CPU="$(yaml_get_or_default '.resources.requests.cpu' "$MODEL_FILE" "500m")"
+  REQUESTS_MEMORY="$(yaml_get_or_default '.resources.requests.memory' "$MODEL_FILE" "4Gi")"
+  LIMITS_CPU="$(yaml_get_or_default '.resources.limits.cpu' "$MODEL_FILE" "2")"
+  LIMITS_MEMORY="$(yaml_get_or_default '.resources.limits.memory' "$MODEL_FILE" "10Gi")"
 
-  REQUESTS_CPU="$(yq -r '.resources.requests.cpu // .spec.template.containers[0].resources.requests.cpu // "500m"' "$MODEL_FILE")"
-  REQUESTS_MEMORY="$(yq -r '.resources.requests.memory // .spec.template.containers[0].resources.requests.memory // "4Gi"' "$MODEL_FILE")"
-  LIMITS_CPU="$(yq -r '.resources.limits.cpu // .spec.template.containers[0].resources.limits.cpu // "2"' "$MODEL_FILE")"
-  LIMITS_MEMORY="$(yq -r '.resources.limits.memory // .spec.template.containers[0].resources.limits.memory // "10Gi"' "$MODEL_FILE")"
+  VLLM_LOGGING_LEVEL="$(yaml_get_or_default '.env.VLLM_LOGGING_LEVEL' "$MODEL_FILE" "INFO")"
 
-  VLLM_LOGGING_LEVEL="$(yq -r '.env.VLLM_LOGGING_LEVEL // .spec.template.containers[0].env[]? | select(.name == "VLLM_LOGGING_LEVEL") | .value // "INFO"' "$MODEL_FILE" | tail -n 1)"
-  [[ -n "$VLLM_LOGGING_LEVEL" && "$VLLM_LOGGING_LEVEL" != "null" ]] || VLLM_LOGGING_LEVEL="INFO"
+  SMOKE_PROMPT="$(yaml_get_or_default '.smoke_test.prompt' "$MODEL_FILE" "Who are you?")"
+  SMOKE_MAX_TOKENS="$(yaml_get_or_default '.smoke_test.max_tokens' "$MODEL_FILE" "40")"
+  LOAD_PROMPT="$(yaml_get_or_default '.load_test.prompt' "$MODEL_FILE" "Write a short paragraph about systems.")"
+  LOAD_MAX_TOKENS="$(yaml_get_or_default '.load_test.max_tokens' "$MODEL_FILE" "120")"
 
-  SMOKE_PROMPT="$(yq -r '.smoke_test.prompt // "Who are you?"' "$MODEL_FILE")"
-  SMOKE_MAX_TOKENS="$(yq -r '.smoke_test.max_tokens // 40' "$MODEL_FILE")"
+  BENCHMARK_PROMPT_TOKENS="$(yaml_get_or_default '.benchmark.prompt_tokens' "$MODEL_FILE" "128")"
+  BENCHMARK_OUTPUT_TOKENS="$(yaml_get_or_default '.benchmark.output_tokens' "$MODEL_FILE" "128")"
+  BENCHMARK_MAX_SECONDS="$(yaml_get_or_default '.benchmark.max_seconds' "$MODEL_FILE" "30")"
 
-  LOAD_PROMPT="$(yq -r '.load_test.prompt // "Write a short paragraph about systems."' "$MODEL_FILE")"
-  LOAD_MAX_TOKENS="$(yq -r '.load_test.max_tokens // 120' "$MODEL_FILE")"
+  WORKLOAD_SERVICE_NAME="$(yaml_get_or_default '.workload_service_name' "$MODEL_FILE" "${LLMISVC_NAME}-kserve-workload-svc")"
+  WORKER_DEPLOYMENT_NAME="$(yaml_get_or_default '.worker_deployment_name' "$MODEL_FILE" "${LLMISVC_NAME}-kserve")"
 
-  MIN_REPLICAS="$(yq -r '.scaling.min_replicas // 1' "$MODEL_FILE")"
-  MAX_REPLICAS="$(yq -r '.scaling.max_replicas // 5' "$MODEL_FILE")"
-  CPU_TARGET_UTILIZATION="$(yq -r '.scaling.cpu_target_utilization // 50' "$MODEL_FILE")"
-  POLLING_INTERVAL="$(yq -r '.scaling.polling_interval // 15' "$MODEL_FILE")"
-  COOLDOWN_PERIOD="$(yq -r '.scaling.cooldown_period // 60' "$MODEL_FILE")"
+  SCALING_POLICY_KEY="$(yaml_get_or_default '.scaling_policy' "$MODEL_FILE" "hpa-cpu-baseline")"
+  load_policy_config "$SCALING_POLICY_KEY"
 
-  BENCHMARK_PROMPT_TOKENS="$(yq -r '.benchmark.prompt_tokens // 128' "$MODEL_FILE")"
-  BENCHMARK_OUTPUT_TOKENS="$(yq -r '.benchmark.output_tokens // 128' "$MODEL_FILE")"
-  BENCHMARK_MAX_SECONDS="$(yq -r '.benchmark.max_seconds // 30' "$MODEL_FILE")"
+  KEDA_SCALEDOBJECT_NAME="$(yaml_get_or_default '.keda_scaledobject_name' "$MODEL_FILE" "$(sanitize_name "${MODEL_KEY}")-${POLICY_KEY}")"
+  METRICS_SERVICE_NAME="$(yaml_get_or_default '.metrics_service_name' "$MODEL_FILE" "$(sanitize_name "${MODEL_KEY}")-vllm-metrics")"
+  SERVICE_MONITOR_NAME="$(yaml_get_or_default '.service_monitor_name' "$MODEL_FILE" "$(sanitize_name "${MODEL_KEY}")-vllm-monitor")"
 
-  WORKLOAD_SERVICE_NAME="$(yq -r '.workload_service_name // ""' "$MODEL_FILE")"
-  [[ -n "$WORKLOAD_SERVICE_NAME" && "$WORKLOAD_SERVICE_NAME" != "null" ]] || WORKLOAD_SERVICE_NAME="${LLMISVC_NAME}-kserve-workload-svc"
-
-  WORKER_DEPLOYMENT_NAME="$(yq -r '.worker_deployment_name // ""' "$MODEL_FILE")"
-  [[ -n "$WORKER_DEPLOYMENT_NAME" && "$WORKER_DEPLOYMENT_NAME" != "null" ]] || WORKER_DEPLOYMENT_NAME="${LLMISVC_NAME}-kserve"
-
-  KEDA_SCALEDOBJECT_NAME="$(yq -r '.keda_scaledobject_name // ""' "$MODEL_FILE")"
-  [[ -n "$KEDA_SCALEDOBJECT_NAME" && "$KEDA_SCALEDOBJECT_NAME" != "null" ]] || KEDA_SCALEDOBJECT_NAME="$(sanitize_name "${MODEL_KEY}")-cpu"
-
-  METRICS_SERVICE_NAME="$(yq -r '.metrics_service_name // ""' "$MODEL_FILE")"
-  [[ -n "$METRICS_SERVICE_NAME" && "$METRICS_SERVICE_NAME" != "null" ]] || METRICS_SERVICE_NAME="$(sanitize_name "${MODEL_KEY}")-vllm-metrics"
-
-  SERVICE_MONITOR_NAME="$(yq -r '.service_monitor_name // ""' "$MODEL_FILE")"
-  [[ -n "$SERVICE_MONITOR_NAME" && "$SERVICE_MONITOR_NAME" != "null" ]] || SERVICE_MONITOR_NAME="$(sanitize_name "${MODEL_KEY}")-vllm-monitor"
-
-  [[ -n "$HF_MODEL_ID" && "$HF_MODEL_ID" != "null" ]] || die "hf_model_id/spec.model.uri missing in $MODEL_FILE"
-  [[ -n "$SERVED_MODEL_NAME" && "$SERVED_MODEL_NAME" != "null" ]] || die "served_model_name/spec.model.name missing in $MODEL_FILE"
-  [[ -n "$IMAGE" && "$IMAGE" != "null" ]] || die "image/spec.template.containers[0].image missing in $MODEL_FILE"
+  [[ -n "$HF_MODEL_ID" ]] || die "hf_model_id missing in $MODEL_FILE"
+  [[ -n "$SERVED_MODEL_NAME" ]] || die "served_model_name missing in $MODEL_FILE"
+  [[ -n "$IMAGE" ]] || die "image missing in $MODEL_FILE"
 }
