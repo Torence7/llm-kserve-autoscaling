@@ -134,39 +134,26 @@ bash scripts/benchmark/guidellm_constant_rate.sh --model facebook-opt-125m
 Benchmark defaults such as prompt tokens, output tokens, and duration are read from the model config.
 
 ## Monitoring with Prometheus
-1. Add the Helm repo
+1. Install prometheus
 ```bash
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
+bash scripts/install_prometheus.sh
 ```
-2. Install kube-prometheus-stack
+2. Apply monitoring manifests for a specific model
 ```bash
-helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
-  --namespace monitoring \
-  --create-namespace \
-  --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
+bash scripts/apply_monitoring.sh --model qwen25-0.5b-instruct
 ```
-3. Wait for Prometheus and Grafana
+3. Check whether the model exposes vLLM metrics
 ```bash
-kubectl rollout status deployment/prometheus-grafana -n monitoring --timeout=180s
-kubectl rollout status statefulset/prometheus-prometheus-kube-prometheus-prometheus -n monitoring --timeout=180s
-```
-4. Apply monitoring manifests
-```bash
-kubectl apply -f manifests/monitoring/vllm-metrics-service.yaml
-kubectl apply -f manifests/monitoring/vllm-service-monitor.yaml
-```
-5. Check whether the model exposes vLLM metrics
-```bash
-VLLM_POD=$(kubectl get pod -n llm-demo -o jsonpath='{.items[0].metadata.name}')
+VLLM_POD=$(kubectl get pod -n llm-demo -l app.kubernetes.io/name=qwen25-0-5b-instruct -o jsonpath='{.items[0].metadata.name}')
 echo "$VLLM_POD"
 
+#Then inspect the metrics endpoint:
 kubectl exec -n llm-demo "$VLLM_POD" -- wget -qO- http://localhost:8000/metrics | head -20
 kubectl exec -n llm-demo "$VLLM_POD" -- wget -qO- http://localhost:8000/metrics | grep "^vllm"
 ```
-6. Check whether Prometheus sees the metrics
+4. Check whether Prometheus sees the metrics
 ```bash
-kubectl describe svc vllm-metrics -n llm-demo | grep -E 'Endpoints|Selector'
+kubectl describe svc qwen25-0-5b-instruct-vllm-metrics -n llm-demo | grep -E 'Endpoints|Selector'
 ```
 If you want to query Prometheus directly, first find the Prometheus pod:
 ```bash

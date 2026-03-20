@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: vllm-metrics
-  namespace: llm-demo
+  name: ${METRICS_SERVICE_NAME}
+  namespace: ${NAMESPACE}
   labels:
-    app: vllm-metrics
+    app: ${METRICS_SERVICE_NAME}
 spec:
   selector:
-    app.kubernetes.io/name: facebook-opt-125m
+    app.kubernetes.io/name: ${WORKLOAD_LABEL_NAME}
     kserve.io/component: workload
   ports:
     - name: metrics
-      port: 8000
-      targetPort: 8000
+      port: ${METRICS_PORT}
+      targetPort: ${METRICS_PORT}

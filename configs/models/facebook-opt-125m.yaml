@@ -23,6 +23,13 @@ resources:
 env:
   VLLM_LOGGING_LEVEL: INFO
 
+metrics_service_name: facebook-opt-125m-vllm-metrics
+service_monitor_name: facebook-opt-125m-vllm-monitor
+workload_label_name: facebook-opt-125m
+metrics_port: 8000
+metrics_path: /metrics
+metrics_scrape_interval: 15s
+
 smoke_test:
   prompt: "Who are you?"
   max_tokens: 40
