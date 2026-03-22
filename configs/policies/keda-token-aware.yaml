@@ -1,0 +1,26 @@
+policy_key: keda-token-aware
+policy_type: keda-prometheus
+
+min_replicas: 1
+max_replicas: 8
+polling_interval: 10
+cooldown_period: 45
+
+prometheus:
+  server_address: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+  metric_name: vllm_token_workload
+  query: |
+    (
+      sum(
+        rate(vllm:prompt_tokens_total{namespace="llm-demo"}[1m])
+      )
+    )
+    +
+    0.5 *
+    (
+      sum(
+        rate(vllm:generation_tokens_total{namespace="llm-demo"}[1m])
+      )
+    )
+  threshold: "800"
+  activation_threshold: "200"

@@ -1,0 +1,19 @@
+policy_key: keda-waiting-requests
+policy_type: keda-prometheus
+
+min_replicas: 1
+max_replicas: 6
+polling_interval: 10
+cooldown_period: 45
+
+prometheus:
+  server_address: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+  metric_name: vllm_waiting_requests
+  query: |
+    sum(
+      vllm:num_requests_waiting{
+        namespace="llm-demo"
+      }
+    )
+  threshold: "2"
+  activation_threshold: "1"
