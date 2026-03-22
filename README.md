@@ -12,6 +12,15 @@ The initial example model is **OPT-125M on vLLM CPU**, but the goal of the repo 
 
 
 # # Quick start
+
+### Cloudlab Profile Setup
+
+1. Create a cluster with this [profile](https://www.cloudlab.us/p/f6217a554802140fb4fda7ef718f6ce14f62830c). You must be apart of the Michigan-BigData project to have access. This will automatically install a KIND cluster with KServe installed.
+
+OR
+
+### Repository Clone Setup
+
 1. Clone the repo
 ```bash
 git clone git@github.com:<YOUR-USERNAME>/llm-kserve-autoscaling.git

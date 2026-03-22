@@ -22,7 +22,7 @@ echo "Now on branch: $(git branch --show-current)"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 
-MODEL="facebook-opt-125m"
+MODEL="qwen25-0.5b-instruct"
 SKIP_DEPLOY="0"
 SKIP_BENCHMARK_SETUP="0"
 RUN_KEDA_INSTALL="0"

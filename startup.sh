@@ -33,8 +33,7 @@ done < /etc/passwd
 # copy that CloudLab already placed at /local/repository.
 
 log "Starting cloudlab_setup.sh (KEDA + Prometheus enabled)..."
-export REPO_DIR="$REPO_DIR"
-bash "$REPO_DIR/scripts/cloudlab_setup.sh" \
+REPO_DIR="$REPO_DIR" bash "$REPO_DIR/scripts/cloudlab_setup.sh" \
     --install-keda \
     --install-prometheus
 
