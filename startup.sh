@@ -40,19 +40,20 @@ REPO_DIR="$REPO_DIR" bash "$REPO_DIR/scripts/cloudlab_setup.sh" \
 # Distribute kubeconfig to all users
 
 if [[ -f /users/geniuser/.kube/config ]]; then
-    log "Distributing kubeconfig to real users..."
+    echo "Distributing kubeconfig to real users..."
     while IFS=: read -r username _ uid _ _ homedir shell; do
         [[ "$uid" -lt 1000 ]] && continue
         [[ "$shell" =~ nologin|false ]] && continue
         [[ -z "$homedir" ]] && continue
+        [[ "$username" = "geniuser" ]] && continue
         mkdir -p "$homedir/.kube"
-        cp /root/.kube/config "$homedir/.kube/config"
-        chown -R "$username:$username" "$homedir/.kube"
+        cp /users/geniuser/.kube/config "$homedir/.kube/config"
+        chown -R "$username" "$homedir/.kube"
         chmod 600 "$homedir/.kube/config"
-        log "  Copied kubeconfig to $username ($homedir/.kube/config)"
+        echo "  Copied kubeconfig to $username ($homedir/.kube/config)"
     done < /etc/passwd
 else
-    log "WARNING: /root/.kube/config not found — kubeconfig not distributed."
+    log "WARNING: /users/geniuser/.kube/config not found — kubeconfig not distributed."
 fi
 
 log "CloudLab startup complete."
