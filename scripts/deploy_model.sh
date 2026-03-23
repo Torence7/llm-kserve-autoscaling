@@ -68,6 +68,8 @@ spec:
     scheduler: {}
 EOF
 
+sleep 60
+
 log "Current LLMInferenceServices"
 kubectl get llminferenceservice -n "$NAMESPACE"
 

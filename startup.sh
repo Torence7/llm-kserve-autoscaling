@@ -13,7 +13,7 @@ log() { printf '[%s] %s\n' "$(date +'%H:%M:%S')" "$*"; }
 
 log "Updating apt and installing base dependencies..."
 apt-get update -y
-apt-get install -y docker.io git curl
+apt-get install -y docker.io git curl python3.12-venv
 
 log "Enabling docker service..."
 systemctl enable --now docker

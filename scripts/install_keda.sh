@@ -19,7 +19,8 @@ helm upgrade --install keda kedacore/keda \
 
 # Wait for readiness
 kubectl rollout status deployment/keda-operator -n keda --timeout=180s
-kubectl rollout status deployment/keda-metrics-apiserver -n keda --timeout=180s
+kubectl rollout status deployment/keda-operator-metrics-apiserver -n keda --timeout=180s
+
 
 echo "[11] KEDA installed."
 kubectl get pods -n keda
