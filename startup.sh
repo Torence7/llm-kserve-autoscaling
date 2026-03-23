@@ -39,7 +39,7 @@ REPO_DIR="$REPO_DIR" bash "$REPO_DIR/scripts/cloudlab_setup.sh" \
 
 # Distribute kubeconfig to all users
 
-if [[ -f /root/.kube/config ]]; then
+if [[ -f /users/geniuser/.kube/config ]]; then
     log "Distributing kubeconfig to real users..."
     while IFS=: read -r username _ uid _ _ homedir shell; do
         [[ "$uid" -lt 1000 ]] && continue
