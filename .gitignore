@@ -5,4 +5,5 @@
 .env.*
 .venv
 get_helm.sh
-
+results
+benchmarks.*

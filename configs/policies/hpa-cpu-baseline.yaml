@@ -1,5 +1,5 @@
 policy_key: hpa-cpu-baseline
-policy_type: hpa
+policy_type: hpa-cpu-baseline
 
 min_replicas: 1
 max_replicas: 5

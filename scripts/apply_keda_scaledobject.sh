@@ -79,7 +79,7 @@ render_prometheus_trigger() {
         serverAddress: ${PROMETHEUS_SERVER_ADDRESS}
         metricName: ${metric_name}
         query: |
-          ${query}
+$(echo "${query}" | sed 's/^/          /')
         threshold: "${threshold}"
 EOF
 
@@ -145,6 +145,7 @@ apply_cpu_baseline_scaledobject() {
 )"
 
   PROMETHEUS_METRIC_NAME="${PROMETHEUS_METRIC_NAME:-$metric_name}"
+  # shellcheck disable=SC2016
   PROMETHEUS_QUERY="${PROMETHEUS_QUERY:-$query}"
   THRESHOLD="${THRESHOLD:-$CPU_TARGET_UTILIZATION}"
 
