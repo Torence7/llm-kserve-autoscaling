@@ -27,5 +27,5 @@ triggers:
 advanced:
   scaling_modifiers:
     formula: "max(requests_waiting, kv_cache_pressure)"
-    target: "4"
+    target: "0.3"
     activation_target: "2"

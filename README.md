@@ -324,9 +324,13 @@ To compare fixed replicas against KEDA autoscaling:
 
 ```bash
 # Pause KEDA
+# scaled object name example: qwen25-05b-instruct-keda-vllm-composite
 kubectl annotate scaledobject <scaledobject-name> \
   -n llm-demo autoscaling.keda.sh/paused=true --overwrite
 
+# worker deployment name example: qwen25-0-5b-instruct-kserve
+# run the command below to get it
+kubectl get deploy -n llm-demo
 kubectl scale deployment <worker-deployment> -n llm-demo --replicas=1
 
 # Run benchmark
@@ -345,6 +349,7 @@ python /tmp/llmperf/token_benchmark_ray.py \
 
 ```bash
 # Unpause KEDA
+# scaled object name example: qwen25-05b-instruct-keda-vllm-composite
 kubectl annotate scaledobject <scaledobject-name> \
   -n llm-demo autoscaling.keda.sh/paused- --overwrite
 
