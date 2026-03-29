@@ -52,52 +52,21 @@ OUTFILE="${OUTFILE:-results/guidellm/${MODEL_KEY}_constant.json}"
 
 mkdir -p "$(dirname "$OUTFILE")"
 
-GUIDE_HELP="$(guidellm --help 2>&1 || true)"
-
-MODEL_FLAG=()
-if grep -q -- '--processor' <<<"$GUIDE_HELP"; then
-  MODEL_FLAG=(--processor "$SERVED_MODEL_NAME")
-elif grep -q -- '--model' <<<"$GUIDE_HELP"; then
-  MODEL_FLAG=(--model "$SERVED_MODEL_NAME")
-fi
-
-OUTPUT_FLAG=()
-if grep -q -- '--output-dir' <<<"$GUIDE_HELP" && grep -q -- '--outputs' <<<"$GUIDE_HELP"; then
-  OUTPUT_DIR="$(dirname "$OUTFILE")"
-  OUTPUT_NAME="$(basename "$OUTFILE")"
-  OUTPUT_FLAG=(--output-dir "$OUTPUT_DIR" --outputs "$OUTPUT_NAME")
-elif grep -q -- '--output-path' <<<"$GUIDE_HELP"; then
-  OUTPUT_FLAG=(--output-path "$OUTFILE")
-elif grep -q -- '--output ' <<<"$GUIDE_HELP" || grep -q -- '--output$' <<<"$GUIDE_HELP"; then
-  OUTPUT_FLAG=(--output "$OUTFILE")
-else
-  OUTPUT_FLAG=()
-fi
-
-RATE_FLAG=()
-if grep -q -- '--profile' <<<"$GUIDE_HELP"; then
-  RATE_FLAG=(--profile constant)
-else
-  RATE_FLAG=(--rate-type constant)
-fi
-
-DATA_TYPE_FLAG=()
-if grep -q -- '--data-type' <<<"$GUIDE_HELP"; then
-  DATA_TYPE_FLAG=(--data-type emulated)
-fi
+OUTPUT_DIR="$(dirname "$OUTFILE")"
+OUTPUT_NAME="$(basename "$OUTFILE")"
 
 log "GuideLLM constant-rate benchmark"
 log "target=${TARGET} model=${SERVED_MODEL_NAME} rate=${RATE}"
 log "outfile=${OUTFILE}"
 
-guidellm \
+guidellm benchmark run \
   --target "$TARGET" \
-  "${MODEL_FLAG[@]}" \
-  "${DATA_TYPE_FLAG[@]}" \
-  --data "prompt_tokens=${PROMPT_TOKENS},generated_tokens=${OUTPUT_TOKENS}" \
-  "${RATE_FLAG[@]}" \
+  --model "$SERVED_MODEL_NAME" \
+  --data "prompt_tokens=${PROMPT_TOKENS},output_tokens=${OUTPUT_TOKENS}" \
+  --profile constant \
   --rate "$RATE" \
   --max-seconds "$MAX_SECONDS" \
-  "${OUTPUT_FLAG[@]}"
+  --output-dir "$OUTPUT_DIR" \
+  --outputs "$OUTPUT_NAME"
 
 log "Saved results to ${OUTFILE}"

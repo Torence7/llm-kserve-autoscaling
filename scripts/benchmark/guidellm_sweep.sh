@@ -47,28 +47,20 @@ OUTFILE="${OUTFILE:-results/guidellm/${MODEL_KEY}_sweep.json}"
 
 mkdir -p "$(dirname "$OUTFILE")"
 
-MODEL_FLAG=()
-if guidellm benchmark --help 2>&1 | grep -q -- '--processor'; then
-  MODEL_FLAG=(--processor "$SERVED_MODEL_NAME")
-elif guidellm benchmark --help 2>&1 | grep -q -- '--model'; then
-  MODEL_FLAG=(--model "$SERVED_MODEL_NAME")
-fi
-
-EXTRA_FLAGS=()
-if guidellm benchmark --help 2>&1 | grep -q -- '--detect-saturation'; then
-  EXTRA_FLAGS+=(--detect-saturation)
-fi
+OUTPUT_DIR="$(dirname "$OUTFILE")"
+OUTPUT_NAME="$(basename "$OUTFILE")"
 
 log "GuideLLM sweep benchmark"
 log "target=${TARGET} model=${SERVED_MODEL_NAME}"
 
-guidellm benchmark \
+guidellm benchmark run \
   --target "$TARGET" \
-  "${MODEL_FLAG[@]}" \
-  --rate-type sweep \
-  --max-seconds "$MAX_SECONDS" \
+  --model "$SERVED_MODEL_NAME" \
   --data "prompt_tokens=${PROMPT_TOKENS},output_tokens=${OUTPUT_TOKENS}" \
-  "${EXTRA_FLAGS[@]}" \
-  --output "$OUTFILE"
+  --profile sweep \
+  --max-seconds "$MAX_SECONDS" \
+  --detect-saturation \
+  --output-dir "$OUTPUT_DIR" \
+  --outputs "$OUTPUT_NAME"
 
 log "Saved results to ${OUTFILE}"

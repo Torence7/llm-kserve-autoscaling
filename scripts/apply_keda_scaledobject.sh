@@ -79,7 +79,7 @@ render_prometheus_trigger() {
         serverAddress: ${PROMETHEUS_SERVER_ADDRESS}
         metricName: ${metric_name}
         query: |
-          ${query}
+$(echo "${query}" | sed 's/^/          /')
         threshold: "${threshold}"
 EOF
 
@@ -145,6 +145,7 @@ apply_cpu_baseline_scaledobject() {
 )"
 
   PROMETHEUS_METRIC_NAME="${PROMETHEUS_METRIC_NAME:-$metric_name}"
+  # shellcheck disable=SC2016
   PROMETHEUS_QUERY="${PROMETHEUS_QUERY:-$query}"
   THRESHOLD="${THRESHOLD:-$CPU_TARGET_UTILIZATION}"
 
@@ -183,25 +184,6 @@ apply_composite_scaledobject() {
   done
 
   log "Applying composite KEDA ScaledObject ${KEDA_SCALEDOBJECT_NAME}"
-
-  kubectl apply -f - <<EOF
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: ${KEDA_SCALEDOBJECT_NAME}
-  namespace: ${NAMESPACE}
-spec:
-  scaleTargetRef:
-    name: ${WORKER_DEPLOYMENT_NAME}
-  minReplicaCount: ${MIN_REPLICAS}
-  maxReplicaCount: ${MAX_REPLICAS}
-  pollingInterval: ${POLLING_INTERVAL}
-  cooldownPeriod: ${COOLDOWN_PERIOD}
-  advanced:
-    scalingModifiers:
-      formula: "${SCALING_MODIFIER_FORMULA}"
-      target: "${SCALING_MODIFIER_TARGET}"
-EOF
 
   if [[ -n "$SCALING_MODIFIER_ACTIVATION_TARGET" ]]; then
     cat <<EOF | kubectl apply -f -

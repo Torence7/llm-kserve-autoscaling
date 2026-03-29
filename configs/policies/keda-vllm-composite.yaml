@@ -1,0 +1,31 @@
+policy_key: keda-vllm-composite
+policy_type: keda-composite
+
+min_replicas: 1
+max_replicas: 5
+polling_interval: 5
+cooldown_period: 120
+
+prometheus:
+  server_address: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+
+triggers:
+  - name: requests_waiting
+    metric_name: vllm_requests_waiting
+    query: |
+      sum(vllm:num_requests_waiting{namespace="llm-demo"})
+    threshold: "4"
+    activation_threshold: "2"
+
+  - name: kv_cache_pressure
+    metric_name: vllm_kv_cache_usage
+    query: |
+      avg(vllm:kv_cache_usage_perc{namespace="llm-demo"}) * 100
+    threshold: "70"
+    activation_threshold: "50"
+
+advanced:
+  scaling_modifiers:
+    formula: "max(requests_waiting, kv_cache_pressure)"
+    target: "0.3"
+    activation_target: "2"

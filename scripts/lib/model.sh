@@ -131,6 +131,11 @@ load_model_config() {
   WORKLOAD_SERVICE_NAME="$(yaml_get_or_default '.workload_service_name' "$MODEL_FILE" "${LLMISVC_NAME}-kserve-workload-svc")"
   WORKER_DEPLOYMENT_NAME="$(yaml_get_or_default '.worker_deployment_name' "$MODEL_FILE" "${LLMISVC_NAME}-kserve")"
 
+  WORKLOAD_LABEL_NAME="$(yaml_get_or_default '.workload_label_name' "$MODEL_FILE" "${LLMISVC_NAME}-kserve")"
+  METRICS_PORT="$(yaml_get_or_default '.metrics_port' "$MODEL_FILE" "8000")"
+  METRICS_PATH="$(yaml_get_or_default '.metrics_path' "$MODEL_FILE" "/metrics")"
+  METRICS_SCRAPE_INTERVAL="$(yaml_get_or_default '.metrics_scrape_interval' "$MODEL_FILE" "15s")"
+
   SCALING_POLICY_KEY="$(yaml_get_or_default '.scaling_policy' "$MODEL_FILE" "hpa-cpu-baseline")"
   load_policy_config "$SCALING_POLICY_KEY"
 
