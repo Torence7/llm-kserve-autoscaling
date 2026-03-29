@@ -1,0 +1,24 @@
+name: long-context
+description: Longer prompts to create context pressure and slower prefill.
+request_type: completions
+arrival_pattern: constant
+duration_seconds: 240
+rps: 0.5
+warmup_seconds: 20
+cooldown_seconds: 20
+
+dataset:
+  mode: synthetic
+
+prompt:
+  style: repeated_context
+  seed_text: "Large language model serving must handle prompt prefill, iterative decoding, and changing concurrency. "
+  min_tokens: 1200
+  max_tokens: 2200
+
+output:
+  max_tokens: 128
+
+slo:
+  ttft_p95_ms: 3500
+  e2e_p95_ms: 15000

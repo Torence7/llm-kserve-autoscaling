@@ -1,0 +1,24 @@
+name: short-bursts
+description: Short prompts, short outputs, bursty arrivals to test scale-out responsiveness.
+request_type: completions
+arrival_pattern: poisson
+duration_seconds: 180
+mean_rps: 1.5
+warmup_seconds: 15
+cooldown_seconds: 15
+
+dataset:
+  mode: synthetic
+
+prompt:
+  style: plain
+  template: "In 2-3 sentences, explain why reactive autoscaling can lag behind bursty LLM demand."
+  min_tokens: 32
+  max_tokens: 96
+
+output:
+  max_tokens: 64
+
+slo:
+  ttft_p95_ms: 1200
+  e2e_p95_ms: 6000

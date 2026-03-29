@@ -1,0 +1,29 @@
+name: sustained-mixed
+description: Mixed prompt sizes and outputs under a steady arrival rate.
+request_type: completions
+arrival_pattern: constant
+duration_seconds: 240
+rps: 1.25
+warmup_seconds: 20
+cooldown_seconds: 20
+
+dataset:
+  mode: synthetic
+
+prompt:
+  style: plain
+  template_pool:
+    - "Summarize the tradeoff between throughput and latency in LLM inference."
+    - "Explain how queue depth affects user-visible latency during model serving."
+    - "Describe why prompt length and output length both matter for LLM autoscaling."
+    - "Explain the role of batching in serving transformer-based language models."
+  min_tokens: 64
+  max_tokens: 384
+
+output:
+  max_tokens_min: 64
+  max_tokens_max: 192
+
+slo:
+  ttft_p95_ms: 1800
+  e2e_p95_ms: 10000

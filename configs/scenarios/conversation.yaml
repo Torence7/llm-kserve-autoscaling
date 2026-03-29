@@ -1,0 +1,33 @@
+name: conversation
+description: Chat-like requests with variable prompt sizes and moderate outputs.
+request_type: chat
+arrival_pattern: poisson
+duration_seconds: 240
+mean_rps: 1.0
+warmup_seconds: 20
+cooldown_seconds: 20
+
+dataset:
+  mode: synthetic
+
+prompt:
+  style: chat_pool
+  messages_pool:
+    - system: "You are a concise assistant."
+      user: "What is the difference between CPU-based autoscaling and queue-aware autoscaling?"
+    - system: "You are a helpful assistant."
+      user: "Why can time-to-first-token degrade before CPU reaches saturation?"
+    - system: "You are a clear technical explainer."
+      user: "How does request variability affect LLM serving capacity?"
+    - system: "You are a systems assistant."
+      user: "Explain why long prompts can create pressure even at low request rates."
+  min_tokens: 48
+  max_tokens: 512
+
+output:
+  max_tokens_min: 64
+  max_tokens_max: 160
+
+slo:
+  ttft_p95_ms: 1800
+  e2e_p95_ms: 10000
