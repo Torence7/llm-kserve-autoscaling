@@ -185,6 +185,207 @@ fill in the model-specific values
 
 run the same generic scripts with --model <new-model>
 
+## Setting up LLMPERF
+
+## Overview
+
+- **llmperf** — concurrent request benchmarks, measures TTFT, ITL, and end-to-end latency under sustained load
+
+### Create the virtual environment and install GuideLLM
+
+```bash
+bash scripts/benchmark/install_guidellm.sh
+```
+
+### Install llmperf
+
+```bash
+git clone https://github.com/ray-project/llmperf.git /tmp/llmperf
+cd /tmp/llmperf
+source ~/llm-kserve-autoscaling/.venv/bin/activate
+pip install -e .
+```
+
+## Running a Benchmark
+
+```bash
+bash scripts/deploy_model.sh --model qwen25-0.5b-instruct
+```
+
+```bash
+bash scripts/apply_monitoring.sh --model qwen25-0.5b-instruct
+```
+
+```bash
+bash scripts/apply_keda_scaledobject.sh --model qwen25-0.5b-instruct
+```
+
+### Start port-forward
+
+In a dedicated terminal:
+
+```bash
+bash scripts/portforward_model.sh --model qwen25-0.5b-instruct
+```
+
+### Watch scaling (optional)
+
+In another terminal:
+
+```bash
+bash scripts/watch_keda_scaling.sh --model qwen25-0.5b-instruct
+```
+
+## GuideLLM Benchmarks
+
+### Constant-rate benchmark
+
+Sends requests at a fixed rate (default: 1 req/s). Good for sustained load testing.
+
+```bash
+bash scripts/benchmark/guidellm_constant_rate.sh --model qwen25-0.5b-instruct
+```
+
+Override defaults with environment variables:
+
+```bash
+RATE=5 MAX_SECONDS=60 bash scripts/benchmark/guidellm_constant_rate.sh --model qwen25-0.5b-instruct
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RATE` | `1` | Requests per second |
+| `MAX_SECONDS` | `30` | Benchmark duration |
+| `PROMPT_TOKENS` | `128` | Synthetic prompt size |
+| `OUTPUT_TOKENS` | `128` | Target output size |
+| `TARGET` | `http://localhost:<LOCAL_PORT>/v1` | Endpoint |
+| `OUTFILE` | `results/guidellm/<model>_constant.json` | Output path |
+
+### Sweep benchmark
+
+Automatically sweeps from synchronous to throughput to multiple constant rates. Detects saturation point.
+
+```bash
+bash scripts/benchmark/guidellm_sweep.sh --model qwen25-0.5b-instruct
+```
+
+Results are saved to `results/guidellm/<model>_sweep.json`.
+
+## llmperf Benchmark
+
+Tests concurrent request handling. Reports TTFT (time to first token), ITL (inter-token latency), and end-to-end latency.
+
+```bash
+source ~/llm-kserve-autoscaling/.venv/bin/activate
+
+OPENAI_API_BASE=http://localhost:<LOCAL_PORT>/v1 \
+OPENAI_API_KEY=dummy \
+python /tmp/llmperf/token_benchmark_ray.py \
+  --model <SERVED_MODEL_NAME> \
+  --llm-api openai \
+  --max-num-completed-requests 20 \
+  --num-concurrent-requests 5 \
+  --timeout 300 \
+  --results-dir results/llmperf/
+```
+
+Replace `<LOCAL_PORT>` and `<SERVED_MODEL_NAME>` from the model config. For example, for `qwen25-0.5b-instruct`:
+
+```bash
+OPENAI_API_BASE=http://localhost:8002/v1 \
+OPENAI_API_KEY=dummy \
+python /tmp/llmperf/token_benchmark_ray.py \
+  --model Qwen/Qwen2.5-0.5B-Instruct \
+  --llm-api openai \
+  --max-num-completed-requests 20 \
+  --num-concurrent-requests 5 \
+  --timeout 300 \
+  --results-dir results/llmperf/
+```
+
+### Key output metrics
+
+| Metric | Description |
+|--------|-------------|
+| `ttft_s` | Time to first token — measures queue wait + prefill time |
+| `inter_token_latency_s` | Per-token decode latency |
+| `end_to_end_latency_s` | Total request time |
+| `request_output_throughput_token_per_s` | Per-request token generation rate |
+| `Overall Output Throughput` | Aggregate tokens/sec across all concurrent requests |
+| `Completed Requests Per Minute` | Effective request completion rate |
+
+---
+
+## Baseline vs Autoscaling Comparison
+
+To compare fixed replicas against KEDA autoscaling:
+
+### Baseline run (autoscaling paused, fixed 1 replica)
+
+```bash
+# Pause KEDA
+kubectl annotate scaledobject <scaledobject-name> \
+  -n llm-demo autoscaling.keda.sh/paused=true --overwrite
+
+kubectl scale deployment <worker-deployment> -n llm-demo --replicas=1
+
+# Run benchmark
+OPENAI_API_BASE=http://localhost:8002/v1 \
+OPENAI_API_KEY=dummy \
+python /tmp/llmperf/token_benchmark_ray.py \
+  --model Qwen/Qwen2.5-0.5B-Instruct \
+  --llm-api openai \
+  --max-num-completed-requests 20 \
+  --num-concurrent-requests 5 \
+  --timeout 300 \
+  --results-dir results/llmperf/baseline/
+```
+
+### Autoscaling run
+
+```bash
+# Unpause KEDA
+kubectl annotate scaledobject <scaledobject-name> \
+  -n llm-demo autoscaling.keda.sh/paused- --overwrite
+
+# Run same benchmark
+OPENAI_API_BASE=http://localhost:8002/v1 \
+OPENAI_API_KEY=dummy \
+python /tmp/llmperf/token_benchmark_ray.py \
+  --model Qwen/Qwen2.5-0.5B-Instruct \
+  --llm-api openai \
+  --max-num-completed-requests 20 \
+  --num-concurrent-requests 5 \
+  --timeout 300 \
+  --results-dir results/llmperf/keda/
+```
+
+### Pausing and resuming autoscaling
+
+```bash
+# Pause
+kubectl annotate scaledobject <name> -n llm-demo \
+  autoscaling.keda.sh/paused=true --overwrite
+
+# Resume
+kubectl annotate scaledobject <name> -n llm-demo \
+  autoscaling.keda.sh/paused- --overwrite
+```
+
+## Results Directory Structure
+
+```
+results/
+├── guidellm/
+│   ├── <model>_constant.json       # Constant-rate benchmark
+│   └── <model>_sweep.json          # Sweep benchmark
+└── llmperf/
+    ├── baseline/                   # Fixed replica results
+    └── keda/                       # Autoscaling results
+```
+
+---
+
 
 
 
