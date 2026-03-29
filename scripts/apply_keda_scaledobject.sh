@@ -185,25 +185,6 @@ apply_composite_scaledobject() {
 
   log "Applying composite KEDA ScaledObject ${KEDA_SCALEDOBJECT_NAME}"
 
-  kubectl apply -f - <<EOF
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: ${KEDA_SCALEDOBJECT_NAME}
-  namespace: ${NAMESPACE}
-spec:
-  scaleTargetRef:
-    name: ${WORKER_DEPLOYMENT_NAME}
-  minReplicaCount: ${MIN_REPLICAS}
-  maxReplicaCount: ${MAX_REPLICAS}
-  pollingInterval: ${POLLING_INTERVAL}
-  cooldownPeriod: ${COOLDOWN_PERIOD}
-  advanced:
-    scalingModifiers:
-      formula: "${SCALING_MODIFIER_FORMULA}"
-      target: "${SCALING_MODIFIER_TARGET}"
-EOF
-
   if [[ -n "$SCALING_MODIFIER_ACTIVATION_TARGET" ]]; then
     cat <<EOF | kubectl apply -f -
 apiVersion: keda.sh/v1alpha1
