@@ -147,6 +147,10 @@ load_model_config() {
   load_policy_config "$SCALING_POLICY_KEY"
 
   KEDA_SCALEDOBJECT_NAME="$(yaml_get_or_default '.keda_scaledobject_name' "$MODEL_FILE" "$(sanitize_name "${MODEL_KEY}")-${POLICY_KEY}")"
+  WORKLOAD_LABEL_NAME="$(yaml_get_or_default '.workload_label_name' "$MODEL_FILE" "${LLMISVC_NAME}")"
+  METRICS_PORT="$(yaml_get_or_default '.metrics_port' "$MODEL_FILE" "8000")"
+  METRICS_PATH="$(yaml_get_or_default '.metrics_path' "$MODEL_FILE" "/metrics")"
+  METRICS_SCRAPE_INTERVAL="$(yaml_get_or_default '.metrics_scrape_interval' "$MODEL_FILE" "15s")"
   METRICS_SERVICE_NAME="$(yaml_get_or_default '.metrics_service_name' "$MODEL_FILE" "$(sanitize_name "${MODEL_KEY}")-vllm-metrics")"
   SERVICE_MONITOR_NAME="$(yaml_get_or_default '.service_monitor_name' "$MODEL_FILE" "$(sanitize_name "${MODEL_KEY}")-vllm-monitor")"
 

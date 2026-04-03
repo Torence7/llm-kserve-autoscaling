@@ -1,0 +1,273 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "annotations": { "list": [] },
+  "description": "vLLM + KServe autoscaling dashboard for llm-demo namespace",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Throughput",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 }, "unit": "tokens/s" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "id": 1,
+      "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "sum(rate(vllm:prompt_tokens_total{namespace=\"$namespace\"}[1m]))", "legendFormat": "prompt tokens/s" },
+        { "expr": "sum(rate(vllm:generation_tokens_total{namespace=\"$namespace\"}[1m]))", "legendFormat": "generation tokens/s" },
+        { "expr": "sum(rate(vllm:prompt_tokens_total{namespace=\"$namespace\"}[1m])) + sum(rate(vllm:generation_tokens_total{namespace=\"$namespace\"}[1m]))", "legendFormat": "total tokens/s" }
+      ],
+      "title": "Token Throughput",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 }, "unit": "reqps" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "id": 2,
+      "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "sum(rate(vllm:request_success_total{namespace=\"$namespace\"}[1m]))", "legendFormat": "successful requests/s" }
+      ],
+      "title": "Request Rate",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "id": 101,
+      "title": "Latency",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 }, "unit": "s" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "id": 3,
+      "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(vllm:e2e_request_latency_seconds_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.90, sum(rate(vllm:e2e_request_latency_seconds_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "p90" },
+        { "expr": "histogram_quantile(0.99, sum(rate(vllm:e2e_request_latency_seconds_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "p99" }
+      ],
+      "title": "E2E Request Latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 }, "unit": "s" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "id": 4,
+      "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(vllm:time_to_first_token_seconds_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "TTFT p50" },
+        { "expr": "histogram_quantile(0.90, sum(rate(vllm:time_to_first_token_seconds_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "TTFT p90" },
+        { "expr": "histogram_quantile(0.50, sum(rate(vllm:time_per_output_token_seconds_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "TPOT p50" },
+        { "expr": "histogram_quantile(0.90, sum(rate(vllm:time_per_output_token_seconds_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "TPOT p90" }
+      ],
+      "title": "TTFT & TPOT",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 }, "unit": "s" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
+      "id": 11,
+      "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(vllm:request_queue_time_seconds_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "queue time p50" },
+        { "expr": "histogram_quantile(0.90, sum(rate(vllm:request_queue_time_seconds_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "queue time p90" },
+        { "expr": "histogram_quantile(0.50, sum(rate(vllm:request_prefill_time_seconds_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "prefill time p50" },
+        { "expr": "histogram_quantile(0.90, sum(rate(vllm:request_prefill_time_seconds_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "prefill time p90" },
+        { "expr": "histogram_quantile(0.50, sum(rate(vllm:request_decode_time_seconds_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "decode time p50" },
+        { "expr": "histogram_quantile(0.90, sum(rate(vllm:request_decode_time_seconds_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "decode time p90" }
+      ],
+      "title": "Request Phase Latency (Queue / Prefill / Decode)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 }, "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+      "id": 12,
+      "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(vllm:request_prompt_tokens_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "prompt tokens p50" },
+        { "expr": "histogram_quantile(0.50, sum(rate(vllm:request_generation_tokens_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "generation tokens p50" },
+        { "expr": "histogram_quantile(0.90, sum(rate(vllm:request_max_num_generation_tokens_bucket{namespace=\"$namespace\"}[1m])) by (le))", "legendFormat": "max gen tokens requested p90" }
+      ],
+      "title": "Tokens per Request",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 },
+      "id": 102,
+      "title": "Queue & KV Cache",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 }, "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 27 },
+      "id": 5,
+      "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "sum(vllm:num_requests_waiting{namespace=\"$namespace\"})", "legendFormat": "waiting" },
+        { "expr": "sum(vllm:num_requests_running{namespace=\"$namespace\"})", "legendFormat": "running" }
+      ],
+      "title": "Request Queue Depth",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 }, "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 27 },
+      "id": 6,
+      "options": { "legend": { "calcs": ["mean", "last"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "sum(vllm:kv_cache_usage_perc{namespace=\"$namespace\"})", "legendFormat": "KV cache used" }
+      ],
+      "title": "KV Cache Utilization",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 }, "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 35 },
+      "id": 13,
+      "options": { "legend": { "calcs": ["mean", "last"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "expr": "sum(rate(vllm:prefix_cache_hits_total{namespace=\"$namespace\"}[1m])) / (sum(rate(vllm:prefix_cache_queries_total{namespace=\"$namespace\"}[1m])) + 1e-9)",
+          "legendFormat": "prefix cache hit rate"
+        }
+      ],
+      "title": "Prefix Cache Hit Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 }, "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 35 },
+      "id": 14,
+      "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "sum(rate(vllm:num_preemptions_total{namespace=\"$namespace\"}[1m]))", "legendFormat": "preemptions/s" }
+      ],
+      "title": "Preemptions",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 43 },
+      "id": 103,
+      "title": "Autoscaling (KEDA)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 }, "unit": "short", "min": 0 }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 44 },
+      "id": 7,
+      "options": { "legend": { "calcs": ["last"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "kube_deployment_spec_replicas{namespace=\"$namespace\"}", "legendFormat": "desired - {{deployment}}" },
+        { "expr": "kube_deployment_status_replicas_ready{namespace=\"$namespace\"}", "legendFormat": "ready - {{deployment}}" }
+      ],
+      "title": "Replica Count",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 }, "unit": "tokens/s" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 44 },
+      "id": 8,
+      "options": { "legend": { "calcs": ["mean", "last"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "sum(rate(vllm:prompt_tokens_total{namespace=\"$namespace\"}[1m])) + 0.5 * sum(rate(vllm:generation_tokens_total{namespace=\"$namespace\"}[1m]))", "legendFormat": "token workload (KEDA metric)" }
+      ],
+      "title": "KEDA Scaling Metric",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 52 },
+      "id": 104,
+      "title": "Resource Usage",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 }, "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 53 },
+      "id": 9,
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 }, "unit": "cores" }, "overrides": [] },
+      "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", container!=\"\", container!=\"POD\"}[1m])) by (pod)", "legendFormat": "{{pod}}" }
+      ],
+      "title": "CPU Usage by Pod (cores)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 }, "unit": "bytes" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 53 },
+      "id": 10,
+      "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\", container!=\"\", container!=\"POD\"}) by (pod)", "legendFormat": "{{pod}}" }
+      ],
+      "title": "Memory Usage by Pod",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "tags": ["vllm", "kserve", "llm", "autoscaling"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "type": "datasource",
+        "label": "Datasource"
+      },
+      {
+        "current": { "selected": false, "text": "llm-demo", "value": "llm-demo" },
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(vllm:num_requests_running, namespace)",
+        "hide": 0,
+        "includeAll": false,
+        "name": "namespace",
+        "options": [],
+        "query": { "query": "label_values(vllm:num_requests_running, namespace)", "refId": "StandardVariableQuery" },
+        "refresh": 2,
+        "type": "query",
+        "label": "Namespace"
+      }
+    ]
+  },
+  "time": { "from": "now-5m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "vLLM + KServe Autoscaling",
+  "uid": "vllm-kserve-autoscaling",
+  "version": 2
+}

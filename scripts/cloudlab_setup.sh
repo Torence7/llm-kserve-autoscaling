@@ -174,6 +174,12 @@ else
   log "Skipping apply_llm_presets.sh (not present)"
 fi
 
+if have_script "apply_grafana_dashboard.sh"; then
+  run_script "apply_grafana_dashboard.sh"
+else
+  log "Skipping apply_grafana_dashboard.sh (not present)"
+fi
+
 if [[ "$RUN_KEDA_INSTALL" == "1" ]]; then
   run_script "install_keda.sh"
   if have_script "verify_keda.sh"; then
