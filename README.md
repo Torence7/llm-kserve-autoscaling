@@ -151,6 +151,34 @@ Then query:
 kubectl exec -n monitoring "$PROM_POD" -c prometheus -- \
   wget -qO- 'http://localhost:9090/api/v1/query?query=vllm:num_requests_running' | python3 -m json.tool
 ```
+## Grafana Dashboard
+
+1. Deploy the dashboard ConfigMap (only needed once, or after updates)
+```bash
+bash scripts/apply_grafana_dashboard.sh
+```
+
+2. On your **local machine**, open an SSH tunnel to the CloudLab node while port-forwarding Grafana:
+```bash
+ssh -L 3000:localhost:3000 <user>@<cloudlab-host> \
+  "kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring"
+```
+
+3. Open in your browser:
+```
+http://localhost:3000
+```
+
+4. Log in with username `admin`. Retrieve the password from the cluster:
+```bash
+kubectl get secret prometheus-grafana -n monitoring \
+  -o jsonpath='{.data.admin-password}' | base64 -d && echo
+```
+
+5. Navigate to **Dashboards → vLLM + KServe Autoscaling**
+
+The dashboard defaults to the last 5 minutes and auto-refreshes every 10 seconds. Use the `Namespace` dropdown to select `llm-demo`.
+
 ## Adding another model
 
 To support a new model:
