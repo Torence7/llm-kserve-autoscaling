@@ -60,7 +60,127 @@ def clamp_prompt_tokens(text: str, min_tokens: int, max_tokens: int) -> str:
     return " ".join(words)
 
 
-def build_prompt_from_scenario(cfg: Dict[str, Any]) -> Dict[str, Any]:
+def percentile(values: List[float], p: float) -> Optional[float]:
+    if not values:
+        return None
+    values_sorted = sorted(values)
+    if len(values_sorted) == 1:
+        return float(values_sorted[0])
+    k = (len(values_sorted) - 1) * (p / 100.0)
+    f = math.floor(k)
+    c = math.ceil(k)
+    if f == c:
+        return float(values_sorted[int(k)])
+    d0 = values_sorted[f] * (c - k)
+    d1 = values_sorted[c] * (k - f)
+    return float(d0 + d1)
+
+
+def choose_max_tokens(cfg: Dict[str, Any]) -> int:
+    output_cfg = cfg["output"]
+    if "max_tokens" in output_cfg:
+        return int(output_cfg["max_tokens"])
+    return random.randint(int(output_cfg["max_tokens_min"]), int(output_cfg["max_tokens_max"]))
+
+
+def poisson_wait(mean_rps: float) -> float:
+    if mean_rps <= 0:
+        return 1.0
+    return random.expovariate(mean_rps)
+
+
+def constant_wait(rps: float) -> float:
+    if rps <= 0:
+        return 1.0
+    return 1.0 / rps
+
+
+def load_jsonl_dataset(path: str) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line_num, line in enumerate(f, start=1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSONL at {path}:{line_num}: {e}") from e
+    if not rows:
+        raise ValueError(f"No rows found in dataset file: {path}")
+    return rows
+
+
+def normalize_dataset_path(cfg: Dict[str, Any], scenario_path: str) -> Optional[Path]:
+    dataset_cfg = cfg.get("dataset", {})
+    if dataset_cfg.get("mode") != "jsonl":
+        return None
+
+    raw_path = dataset_cfg.get("path")
+    if not raw_path:
+        raise ValueError("dataset.mode is jsonl but dataset.path is missing")
+
+    p = Path(raw_path)
+    if p.is_absolute():
+        return p
+
+    # Resolve relative to repo root-ish by scenario file parent/.. fallback
+    scenario_parent = Path(scenario_path).resolve().parent
+    candidate = (scenario_parent.parent.parent / raw_path).resolve()
+    if candidate.exists():
+        return candidate
+
+    candidate2 = (Path.cwd() / raw_path).resolve()
+    return candidate2
+
+
+def dataset_prompt_from_row(row: Dict[str, Any], min_tokens: int, max_tokens: int) -> str:
+    # Try common fields in order.
+    for key in ["prompt", "instruction", "text", "input"]:
+        value = row.get(key)
+        if isinstance(value, str) and value.strip():
+            return clamp_prompt_tokens(value, min_tokens, max_tokens)
+
+    # Dolly-style rows often have instruction + context/input
+    instruction = row.get("instruction", "")
+    context = row.get("context", row.get("input", ""))
+    merged = "\n\n".join([x for x in [instruction, context] if isinstance(x, str) and x.strip()])
+    if merged.strip():
+        return clamp_prompt_tokens(merged, min_tokens, max_tokens)
+
+    raise ValueError(f"Could not build prompt from dataset row keys: {list(row.keys())}")
+
+
+def dataset_chat_from_row(row: Dict[str, Any], min_tokens: int, max_tokens: int) -> List[Dict[str, str]]:
+    messages = row.get("messages")
+    if isinstance(messages, list) and messages:
+        normalized = []
+        for m in messages:
+            if not isinstance(m, dict):
+                continue
+            role = m.get("role")
+            content = m.get("content")
+            if isinstance(role, str) and isinstance(content, str) and content.strip():
+                normalized.append({"role": role, "content": content})
+        if normalized:
+            # Expand the last user message a little if desired
+            for i in range(len(normalized) - 1, -1, -1):
+                if normalized[i]["role"] == "user":
+                    normalized[i]["content"] = clamp_prompt_tokens(
+                        normalized[i]["content"], min_tokens, max_tokens
+                    )
+                    break
+            return normalized
+
+    # Fallback: build simple chat from prompt-like fields
+    prompt = dataset_prompt_from_row(row, min_tokens, max_tokens)
+    return [{"role": "user", "content": prompt}]
+
+
+def build_prompt_from_scenario(
+    cfg: Dict[str, Any],
+    dataset_rows: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
     prompt_cfg = cfg["prompt"]
     style = prompt_cfg["style"]
 
@@ -100,42 +220,31 @@ def build_prompt_from_scenario(cfg: Dict[str, Any]) -> Dict[str, Any]:
             ]
         }
 
+    if style == "dataset_prompt":
+        if not dataset_rows:
+            raise ValueError("prompt.style=dataset_prompt requires dataset.mode=jsonl and a loaded dataset")
+        row = random.choice(dataset_rows)
+        return {
+            "prompt": dataset_prompt_from_row(
+                row,
+                prompt_cfg["min_tokens"],
+                prompt_cfg["max_tokens"],
+            )
+        }
+
+    if style == "dataset_chat":
+        if not dataset_rows:
+            raise ValueError("prompt.style=dataset_chat requires dataset.mode=jsonl and a loaded dataset")
+        row = random.choice(dataset_rows)
+        return {
+            "messages": dataset_chat_from_row(
+                row,
+                prompt_cfg["min_tokens"],
+                prompt_cfg["max_tokens"],
+            )
+        }
+
     raise ValueError(f"Unsupported prompt style: {style}")
-
-
-def choose_max_tokens(cfg: Dict[str, Any]) -> int:
-    output_cfg = cfg["output"]
-    if "max_tokens" in output_cfg:
-        return int(output_cfg["max_tokens"])
-    return random.randint(int(output_cfg["max_tokens_min"]), int(output_cfg["max_tokens_max"]))
-
-
-def poisson_wait(mean_rps: float) -> float:
-    if mean_rps <= 0:
-        return 1.0
-    return random.expovariate(mean_rps)
-
-
-def constant_wait(rps: float) -> float:
-    if rps <= 0:
-        return 1.0
-    return 1.0 / rps
-
-
-def percentile(values: List[float], p: float) -> Optional[float]:
-    if not values:
-        return None
-    values_sorted = sorted(values)
-    if len(values_sorted) == 1:
-        return float(values_sorted[0])
-    k = (len(values_sorted) - 1) * (p / 100.0)
-    f = math.floor(k)
-    c = math.ceil(k)
-    if f == c:
-        return float(values_sorted[int(k)])
-    d0 = values_sorted[f] * (c - k)
-    d1 = values_sorted[c] * (k - f)
-    return float(d0 + d1)
 
 
 async def send_one_request(
@@ -267,6 +376,16 @@ async def benchmark_main(args: argparse.Namespace) -> None:
     mean_rps = scenario_cfg.get("mean_rps")
     rps = scenario_cfg.get("rps")
 
+    dataset_rows: Optional[List[Dict[str, Any]]] = None
+    dataset_cfg = scenario_cfg.get("dataset", {})
+    dataset_mode = dataset_cfg.get("mode", "synthetic")
+
+    if dataset_mode == "jsonl":
+        dataset_path = normalize_dataset_path(scenario_cfg, args.scenario)
+        dataset_rows = load_jsonl_dataset(str(dataset_path))
+    elif dataset_mode != "synthetic":
+        raise ValueError(f"Unsupported dataset.mode: {dataset_mode}")
+
     print(
         json.dumps(
             {
@@ -279,6 +398,9 @@ async def benchmark_main(args: argparse.Namespace) -> None:
                 "max_in_flight": max_in_flight,
                 "timeout_seconds": timeout_s,
                 "drain_timeout_seconds": drain_timeout_s,
+                "dataset_mode": dataset_mode,
+                "dataset_rows": len(dataset_rows) if dataset_rows else 0,
+                "dataset_path": dataset_cfg.get("path"),
             },
             indent=2,
         ),
@@ -292,7 +414,7 @@ async def benchmark_main(args: argparse.Namespace) -> None:
 
     async with aiohttp.ClientSession() as session:
         while time.time() < t_end:
-            payload_inputs = build_prompt_from_scenario(scenario_cfg)
+            payload_inputs = build_prompt_from_scenario(scenario_cfg, dataset_rows=dataset_rows)
             max_tokens = choose_max_tokens(scenario_cfg)
 
             task = asyncio.create_task(

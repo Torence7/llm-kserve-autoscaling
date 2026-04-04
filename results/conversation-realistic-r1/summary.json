@@ -1,0 +1,16 @@
+{
+  "scenario": "conversation-realistic",
+  "request_type": "completions",
+  "target": "http://localhost:8002/v1",
+  "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
+  "duration_seconds": 30,
+  "drain_timeout_seconds": 5.0,
+  "requests_launched": 7,
+  "requests_total_recorded": 3,
+  "requests_ok": 3,
+  "requests_failed": 0,
+  "latency_p50_ms": 9308.344602584839,
+  "latency_p95_ms": 11915.015745162962,
+  "ttft_p50_ms": 9308.266401290894,
+  "ttft_p95_ms": 11914.946341514586
+}

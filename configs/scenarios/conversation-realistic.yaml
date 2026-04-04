@@ -1,5 +1,5 @@
 name: conversation-realistic
-description: Realistic instruction/chat-like workload using Dolly-15k prompts
+description: Realistic instruction-style workload using Dolly prompts
 request_type: completions
 arrival_pattern: poisson
 duration_seconds: 30
@@ -9,7 +9,7 @@ cooldown_seconds: 0
 
 dataset:
   mode: jsonl
-  path: data/processed/dolly_15k_realistic.jsonl
+  path: configs/data/databricks-dolly-15k.jsonl
   source: databricks/databricks-dolly-15k
 
 prompt:
