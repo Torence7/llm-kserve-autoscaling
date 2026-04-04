@@ -1,0 +1,6 @@
+request_id,scenario,request_type,start_ts,end_ts,latency_ms,ttft_ms,prompt_chars,output_chars,max_tokens,status_code,ok,error
+mdd4v30t9n,short-bursts,completions,1775333925.6079876,1775333930.0073392,4399.35,4399.30,101,129,24,200,1,
+zzpqk51fpk,short-bursts,completions,1775333921.7931976,1775333925.6078591,3814.66,3814.62,50,131,24,200,1,
+4fmyzycwti,short-bursts,completions,1775333946.8749433,1775333951.3963056,4521.36,4521.32,101,129,24,200,1,
+w5uzbikcid,short-bursts,completions,1775333938.0271955,1775333942.00736,3980.16,3980.12,101,129,24,200,1,
+ji0y6dpbhs,short-bursts,completions,1775333918.0178866,1775333921.7930732,3775.19,3775.12,50,131,24,200,1,

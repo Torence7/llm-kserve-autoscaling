@@ -19,8 +19,8 @@ Examples:
   bash scripts/benchmark/run_matrix.sh --model configs/models/qwen25-0.5b-instruct.yaml
 
 Optional environment variables:
-  REPLICAS="1 2 3"
-  SCENARIOS="short-bursts long-context"
+  REPLICA_LIST="1 2 3"
+  SCENARIO_LIST="short-bursts long-context"
   RESULTS_ROOT="results/benchmark"
   PROM_URL="http://localhost:9090"
   METRIC_INTERVAL=5
@@ -55,8 +55,8 @@ need_model_tools
 need_cmd python
 load_model_config "${MODEL_ARG}"
 
-REPLICAS="${REPLICAS:-1 2 3}"
-SCENARIOS="${SCENARIOS:-short-bursts long-context}"
+REPLICA_LIST="${REPLICA_LIST:-1 2 3}"
+SCENARIO_LIST="${SCENARIO_LIST:-short-bursts long-context}"
 RESULTS_ROOT="${RESULTS_ROOT:-${REPO_ROOT}/results/benchmark}"
 PROM_URL="${PROM_URL:-http://localhost:9090}"
 METRIC_INTERVAL="${METRIC_INTERVAL:-5}"
@@ -77,11 +77,11 @@ log "Model key: ${MODEL_KEY}"
 log "Deployment name: ${DEPLOYMENT_NAME}"
 log "Namespace: ${NAMESPACE}"
 log "Target endpoint: ${TARGET}"
-log "Scenarios: ${SCENARIOS}"
-log "Replicas: ${REPLICAS}"
+log "Scenarios: ${SCENARIO_LIST}"
+log "Replicas: ${REPLICA_LIST}"
 log "Results root: ${run_root}"
 
-for scenario_name in ${SCENARIOS}; do
+for scenario_name in ${SCENARIO_LIST}; do
   scenario_path="${REPO_ROOT}/configs/scenarios/${scenario_name}.yaml"
   [[ -f "${scenario_path}" ]] || die "Scenario file not found: ${scenario_path}"
 
@@ -95,7 +95,7 @@ PY
 
   metric_duration_seconds=$(( duration_seconds + DRAIN_TIMEOUT_SECONDS + 5 ))
 
-  for replica_count in ${REPLICAS}; do
+  for replica_count in ${REPLICA_LIST}; do
     run_dir="${run_root}/${scenario_name}/replicas_${replica_count}"
     mkdir -p "${run_dir}"
 

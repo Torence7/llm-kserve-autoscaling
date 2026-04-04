@@ -1,0 +1,16 @@
+{
+  "model_file": "/users/Torence/llm-kserve-autoscaling/configs/models/qwen25-0.5b-instruct.yaml",
+  "model_key": "qwen25_05b_instruct",
+  "served_model_name": "Qwen/Qwen2.5-0.5B-Instruct",
+  "namespace": "llm-demo",
+  "deployment_name": "qwen25-0-5b-instruct-kserve",
+  "scenario": "short-bursts",
+  "scenario_path": "/users/Torence/llm-kserve-autoscaling/configs/scenarios/short-bursts.yaml",
+  "replicas": 2,
+  "target": "http://localhost:8002/v1",
+  "prom_url": "http://localhost:9090",
+  "metric_interval_seconds": 5,
+  "benchmark_timeout_seconds": 15,
+  "drain_timeout_seconds": 5,
+  "max_in_flight": 1
+}
