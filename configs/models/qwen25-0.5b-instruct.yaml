@@ -37,7 +37,7 @@ load_test:
   prompt: "Write a short explanation of Kubernetes autoscaling."
   max_tokens: 128
 
-scaling_policy:  hpa-cpu-baseline
+scaling_policy:  keda-waiting-requests
 
 
 benchmark:

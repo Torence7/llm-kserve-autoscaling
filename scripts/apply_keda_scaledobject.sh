@@ -15,7 +15,6 @@ Description:
   configs/policies/, and applies the corresponding KEDA ScaledObject.
 
 Supported policy types:
-  - hpa-cpu-baseline
   - keda-prometheus
   - keda-composite
 EOF
@@ -63,7 +62,7 @@ log "Policy: ${POLICY_KEY} (${POLICY_TYPE})"
 log "Target deployment: ${WORKER_DEPLOYMENT_NAME}"
 
 log "Deleting existing HPAs in ${NAMESPACE} to avoid HPA/KEDA conflicts"
-kubectl delete hpa -n "$NAMESPACE" --all --ignore-not-found
+kubectl delete hpa -n "$NAMESPACE" --all --ignore-not-found >/dev/null 2>&1 || true
 
 render_prometheus_trigger() {
   local name="$1"
@@ -73,19 +72,19 @@ render_prometheus_trigger() {
   local activation_threshold="${5:-}"
 
   cat <<EOF
-    - type: prometheus
-      name: ${name}
-      metadata:
-        serverAddress: ${PROMETHEUS_SERVER_ADDRESS}
-        metricName: ${metric_name}
-        query: |
-          ${query}
-        threshold: "${threshold}"
+  - type: prometheus
+    name: "${name}"
+    metadata:
+      serverAddress: "${PROMETHEUS_SERVER_ADDRESS}"
+      metricName: "${metric_name}"
+      query: |
+$(printf '%s\n' "$query" | sed 's/^/        /')
+      threshold: "${threshold}"
 EOF
 
   if [[ -n "$activation_threshold" ]]; then
     cat <<EOF
-        activationThreshold: "${activation_threshold}"
+      activationThreshold: "${activation_threshold}"
 EOF
   fi
 }
@@ -97,7 +96,10 @@ apply_single_prometheus_scaledobject() {
 
   log "Applying KEDA ScaledObject ${KEDA_SCALEDOBJECT_NAME}"
 
-  kubectl apply -f - <<EOF
+  local tmp_file
+  tmp_file="$(mktemp /tmp/keda_scaledobject.XXXXXX.yaml)"
+
+  cat > "$tmp_file" <<EOF
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -118,37 +120,13 @@ $(render_prometheus_trigger \
   "${THRESHOLD}" \
   "${ACTIVATION_THRESHOLD}")
 EOF
-}
 
-apply_cpu_baseline_scaledobject() {
-  local metric_name="cpu_utilization"
-  local query="avg(
-  100 *
-  (
-    sum by (pod) (
-      rate(container_cpu_usage_seconds_total{
-        namespace=\"${NAMESPACE}\",
-        pod=~\"${WORKER_DEPLOYMENT_NAME}.*\",
-        container!=\"POD\",
-        container!=\"\"
-      }[2m])
-    )
-    /
-    sum by (pod) (
-      kube_pod_container_resource_requests{
-        namespace=\"${NAMESPACE}\",
-        pod=~\"${WORKER_DEPLOYMENT_NAME}.*\",
-        resource=\"cpu\"
-      }
-    )
-  )
-)"
+  echo "Generated ScaledObject YAML:"
+  cat "$tmp_file"
+  echo
 
-  PROMETHEUS_METRIC_NAME="${PROMETHEUS_METRIC_NAME:-$metric_name}"
-  PROMETHEUS_QUERY="${PROMETHEUS_QUERY:-$query}"
-  THRESHOLD="${THRESHOLD:-$CPU_TARGET_UTILIZATION}"
-
-  apply_single_prometheus_scaledobject
+  kubectl apply -f "$tmp_file"
+  rm -f "$tmp_file"
 }
 
 apply_composite_scaledobject() {
@@ -184,7 +162,10 @@ apply_composite_scaledobject() {
 
   log "Applying composite KEDA ScaledObject ${KEDA_SCALEDOBJECT_NAME}"
 
-  kubectl apply -f - <<EOF
+  local tmp_file
+  tmp_file="$(mktemp /tmp/keda_scaledobject_composite.XXXXXX.yaml)"
+
+  cat > "$tmp_file" <<EOF
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -203,56 +184,26 @@ spec:
       target: "${SCALING_MODIFIER_TARGET}"
 EOF
 
-  if [[ -n "$SCALING_MODIFIER_ACTIVATION_TARGET" ]]; then
-    cat <<EOF | kubectl apply -f -
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: ${KEDA_SCALEDOBJECT_NAME}
-  namespace: ${NAMESPACE}
-spec:
-  scaleTargetRef:
-    name: ${WORKER_DEPLOYMENT_NAME}
-  minReplicaCount: ${MIN_REPLICAS}
-  maxReplicaCount: ${MAX_REPLICAS}
-  pollingInterval: ${POLLING_INTERVAL}
-  cooldownPeriod: ${COOLDOWN_PERIOD}
-  advanced:
-    scalingModifiers:
-      formula: "${SCALING_MODIFIER_FORMULA}"
-      target: "${SCALING_MODIFIER_TARGET}"
+  if [[ -n "${SCALING_MODIFIER_ACTIVATION_TARGET:-}" ]]; then
+    cat >> "$tmp_file" <<EOF
       activationTarget: "${SCALING_MODIFIER_ACTIVATION_TARGET}"
-  triggers:
-${triggers_yaml}
-EOF
-  else
-    kubectl apply -f - <<EOF
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: ${KEDA_SCALEDOBJECT_NAME}
-  namespace: ${NAMESPACE}
-spec:
-  scaleTargetRef:
-    name: ${WORKER_DEPLOYMENT_NAME}
-  minReplicaCount: ${MIN_REPLICAS}
-  maxReplicaCount: ${MAX_REPLICAS}
-  pollingInterval: ${POLLING_INTERVAL}
-  cooldownPeriod: ${COOLDOWN_PERIOD}
-  advanced:
-    scalingModifiers:
-      formula: "${SCALING_MODIFIER_FORMULA}"
-      target: "${SCALING_MODIFIER_TARGET}"
-  triggers:
-${triggers_yaml}
 EOF
   fi
+
+  cat >> "$tmp_file" <<EOF
+  triggers:
+${triggers_yaml}
+EOF
+
+  echo "Generated ScaledObject YAML:"
+  cat "$tmp_file"
+  echo
+
+  kubectl apply -f "$tmp_file"
+  rm -f "$tmp_file"
 }
 
 case "$POLICY_TYPE" in
-  hpa-cpu-baseline)
-    apply_cpu_baseline_scaledobject
-    ;;
   keda-prometheus)
     apply_single_prometheus_scaledobject
     ;;

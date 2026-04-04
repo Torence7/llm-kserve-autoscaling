@@ -118,64 +118,6 @@ bash scripts/verify_keda.sh
 bash scripts/watch_keda_scaling.sh
 ```
 
-## Scenario-based benchmarking
-
-This repo also supports scenario-driven benchmarking for controlled workload generation without GuideLLM.
-
-### Scenario files
-Scenario YAMLs live in:
-
-```bash
-configs/scenarios/
-```
-Run one scenario directly
-
-First, port-forward the deployed model in one terminal:
-```bash
-bash scripts/portforward_model.sh --model qwen25-0.5b-instruct
-```
-Then run a scenario in another terminal:
-```bash
-source .venv/bin/activate
-python -u scripts/benchmark/run_benchmark.py \
-  --target http://localhost:8002/v1 \
-  --model-name Qwen/Qwen2.5-0.5B-Instruct \
-  --scenario configs/scenarios/short-bursts.yaml \
-  --outdir results/test-short-bursts \
-  --max-in-flight 1 \
-  --timeout-seconds 15 \
-  --drain-timeout-seconds 5
-```
-Collect Prometheus metrics during a run
-```bash
-source .venv/bin/activate
-python -u scripts/metrics/collect_metrics.py \
-  --prom-url http://localhost:9090 \
-  --duration-seconds 40 \
-  --interval-seconds 5 \
-  --deployment-name qwen25-0-5b-instruct-kserve \
-  --namespace llm-demo \
-  --outcsv results/test-short-bursts/system_metrics.csv
-```
-
-Run a fixed-replica benchmark matrix
-
-Use the matrix runner to sweep scenarios across replica counts:
-```bash
-source .venv/bin/activate
-REPLICAS="1 2 3" \
-SCENARIOS="short-bursts long-context" \
-PROM_URL="http://localhost:9090" \
-bash scripts/benchmark/run_matrix.sh --model qwen25-0.5b-instruct
-```
-This will:
-scale the deployment to the chosen replica count
-wait for rollout readiness
-start Prometheus metric collection
-run the selected scenario
-save benchmark outputs for that replica count
-repeat for the next replica count / scenario
-
 ## Monitoring with Prometheus
 1. Install prometheus
 ```bash
@@ -220,6 +162,44 @@ fill in the model-specific values
 run the same generic scripts with --model <new-model>
 
 
+## Running policy-comparison benchmarks
 
+This repo supports policy-based benchmarking for comparing autoscaling strategies under the same workload scenario.
 
+### Prerequisites
 
+Make sure these are already running:
+
+- the model is deployed
+- the model endpoint is port-forwarded locally
+- Prometheus is installed
+- Prometheus is port-forwarded locally
+- the Python virtual environment is activated
+
+Example:
+
+```bash
+source .venv/bin/activate
+bash scripts/portforward_model.sh --model qwen25-0.5b-instruct
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090
+```
+Run one policy evaluation
+
+Example HPA CPU baseline run:
+```bash
+source .venv/bin/activate
+PROM_URL="http://localhost:9090" \
+bash scripts/benchmark/run_policy_eval.sh \
+  --model qwen25-0.5b-instruct \
+  --policy hpa-cpu-baseline \
+  --scenario short-bursts
+```
+Example KEDA run:
+```bash
+source .venv/bin/activate
+PROM_URL="http://localhost:9090" \
+bash scripts/benchmark/run_policy_eval.sh \
+  --model qwen25-0.5b-instruct \
+  --policy keda-waiting-requests \
+  --scenario short-bursts
+```

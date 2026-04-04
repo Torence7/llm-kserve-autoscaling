@@ -1,0 +1,9 @@
+timestamp,num_requests_running,num_requests_waiting,avg_generation_throughput_toks_per_s,kv_cache_usage_perc,ready_replicas
+1775339432.8562148,,,,,
+1775339437.86253,,,,,
+1775339442.8679307,,,,,
+1775339447.8735225,,,,,
+1775339452.8802,,,,,
+1775339457.8879402,,,,,
+1775339462.898179,,,,,
+1775339467.9057372,,,,,

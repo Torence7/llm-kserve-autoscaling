@@ -124,24 +124,16 @@ def normalize_dataset_path(cfg: Dict[str, Any], scenario_path: str) -> Optional[
     if p.is_absolute():
         return p
 
-    # Resolve relative to repo root-ish by scenario file parent/.. fallback
-    scenario_parent = Path(scenario_path).resolve().parent
-    candidate = (scenario_parent.parent.parent / raw_path).resolve()
-    if candidate.exists():
-        return candidate
-
-    candidate2 = (Path.cwd() / raw_path).resolve()
-    return candidate2
+    candidate = (Path.cwd() / raw_path).resolve()
+    return candidate
 
 
 def dataset_prompt_from_row(row: Dict[str, Any], min_tokens: int, max_tokens: int) -> str:
-    # Try common fields in order.
     for key in ["prompt", "instruction", "text", "input"]:
         value = row.get(key)
         if isinstance(value, str) and value.strip():
             return clamp_prompt_tokens(value, min_tokens, max_tokens)
 
-    # Dolly-style rows often have instruction + context/input
     instruction = row.get("instruction", "")
     context = row.get("context", row.get("input", ""))
     merged = "\n\n".join([x for x in [instruction, context] if isinstance(x, str) and x.strip()])
@@ -163,7 +155,6 @@ def dataset_chat_from_row(row: Dict[str, Any], min_tokens: int, max_tokens: int)
             if isinstance(role, str) and isinstance(content, str) and content.strip():
                 normalized.append({"role": role, "content": content})
         if normalized:
-            # Expand the last user message a little if desired
             for i in range(len(normalized) - 1, -1, -1):
                 if normalized[i]["role"] == "user":
                     normalized[i]["content"] = clamp_prompt_tokens(
@@ -172,7 +163,6 @@ def dataset_chat_from_row(row: Dict[str, Any], min_tokens: int, max_tokens: int)
                     break
             return normalized
 
-    # Fallback: build simple chat from prompt-like fields
     prompt = dataset_prompt_from_row(row, min_tokens, max_tokens)
     return [{"role": "user", "content": prompt}]
 
@@ -470,6 +460,9 @@ async def benchmark_main(args: argparse.Namespace) -> None:
         "model_name": args.model_name,
         "duration_seconds": duration,
         "drain_timeout_seconds": drain_timeout_s,
+        "dataset_mode": dataset_mode,
+        "dataset_path": dataset_cfg.get("path"),
+        "dataset_rows": len(dataset_rows) if dataset_rows else 0,
         "requests_launched": launched,
         "requests_total_recorded": len(results),
         "requests_ok": len(ok_results),
