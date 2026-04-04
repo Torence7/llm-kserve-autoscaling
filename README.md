@@ -118,29 +118,15 @@ bash scripts/verify_keda.sh
 bash scripts/watch_keda_scaling.sh
 ```
 
-## Benchmarking with GuideLLM
-1. Install GuideLLM into the repo virtual environment
-```bash
-bash scripts/benchmark/install_guidellm.sh
-```
-2. Run a sweep benchmark
+## Scenario-based benchmarking
 
-This increases pressure across stages to find saturation:
-```bash
-bash scripts/benchmark/guidellm_sweep.sh --model facebook-opt-125m
-```
-3. Run a constant-rate benchmark
-```bash
-bash scripts/benchmark/guidellm_constant_rate.sh --model facebook-opt-125m
-```
-You can override values as needed:
-```bash
-RATE=2 \
-MAX_SECONDS=90 \
-bash scripts/benchmark/guidellm_constant_rate.sh --model facebook-opt-125m
-```
+This repo also supports scenario-driven benchmarking for controlled workload generation without GuideLLM.
 
-Benchmark defaults such as prompt tokens, output tokens, and duration are read from the model config.
+### Scenario files
+Scenario YAMLs live in:
+
+```text
+configs/scenarios/
 
 ## Monitoring with Prometheus
 1. Install prometheus

@@ -15,18 +15,19 @@ Usage:
   bash scripts/benchmark/run_matrix.sh --model <key|path>
 
 Examples:
-  bash scripts/benchmark/run_matrix.sh --model phi3-mini-4k-instruct
-  bash scripts/benchmark/run_matrix.sh --model configs/models/phi3-mini-4k-instruct.yaml
+  bash scripts/benchmark/run_matrix.sh --model qwen25-0.5b-instruct
+  bash scripts/benchmark/run_matrix.sh --model configs/models/qwen25-0.5b-instruct.yaml
 
-Optional environment overrides:
-  REPLICAS="1 2 3 4 5"
-  SCENARIOS="short-bursts sustained-mixed long-context conversation"
-  RESULTS_ROOT=results/benchmark
-  PROM_URL=http://localhost:9090
-  METRIC_INTERVAL=15
-  TIMEOUT_SECONDS=180
-  MAX_IN_FLIGHT=32
-  COOLDOWN_SECONDS=20
+Optional environment variables:
+  REPLICAS="1 2 3"
+  SCENARIOS="short-bursts long-context"
+  RESULTS_ROOT="results/benchmark"
+  PROM_URL="http://localhost:9090"
+  METRIC_INTERVAL=5
+  COOLDOWN_SECONDS=10
+  BENCH_TIMEOUT_SECONDS=15
+  DRAIN_TIMEOUT_SECONDS=5
+  MAX_IN_FLIGHT=1
 EOF
 }
 
@@ -50,35 +51,41 @@ done
 
 [[ -n "${MODEL_ARG}" ]] || { usage; exit 1; }
 
-load_model_config "$MODEL_ARG"
+need_model_tools
+need_cmd python
+load_model_config "${MODEL_ARG}"
 
-REPLICAS="${REPLICAS:-1 2 3 4 5}"
-SCENARIOS="${SCENARIOS:-short-bursts sustained-mixed long-context conversation}"
+REPLICAS="${REPLICAS:-1 2 3}"
+SCENARIOS="${SCENARIOS:-short-bursts long-context}"
 RESULTS_ROOT="${RESULTS_ROOT:-${REPO_ROOT}/results/benchmark}"
 PROM_URL="${PROM_URL:-http://localhost:9090}"
-METRIC_INTERVAL="${METRIC_INTERVAL:-15}"
-TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-180}"
-MAX_IN_FLIGHT="${MAX_IN_FLIGHT:-32}"
-COOLDOWN_SECONDS="${COOLDOWN_SECONDS:-20}"
+METRIC_INTERVAL="${METRIC_INTERVAL:-5}"
+COOLDOWN_SECONDS="${COOLDOWN_SECONDS:-10}"
+BENCH_TIMEOUT_SECONDS="${BENCH_TIMEOUT_SECONDS:-15}"
+DRAIN_TIMEOUT_SECONDS="${DRAIN_TIMEOUT_SECONDS:-5}"
+MAX_IN_FLIGHT="${MAX_IN_FLIGHT:-1}"
 
 TARGET="${TARGET:-http://localhost:${LOCAL_PORT}/v1}"
+DEPLOYMENT_NAME="${DEPLOYMENT_NAME:-${WORKER_DEPLOYMENT_NAME}}"
 
 timestamp="$(date +%Y%m%d_%H%M%S)"
 run_root="${RESULTS_ROOT}/${MODEL_KEY}_${timestamp}"
 mkdir -p "${run_root}"
 
+log "Model file: ${MODEL_FILE}"
 log "Model key: ${MODEL_KEY}"
-log "Target: ${TARGET}"
+log "Deployment name: ${DEPLOYMENT_NAME}"
+log "Namespace: ${NAMESPACE}"
+log "Target endpoint: ${TARGET}"
+log "Scenarios: ${SCENARIOS}"
+log "Replicas: ${REPLICAS}"
 log "Results root: ${run_root}"
-
-# You may need to adjust this deployment name depending on how your KServe stack names the underlying deployment.
-DEPLOYMENT_NAME="${DEPLOYMENT_NAME:-${LLMISVC_NAME}-predictor}"
 
 for scenario_name in ${SCENARIOS}; do
   scenario_path="${REPO_ROOT}/configs/scenarios/${scenario_name}.yaml"
   [[ -f "${scenario_path}" ]] || die "Scenario file not found: ${scenario_path}"
 
-  duration_seconds="$(python3 - <<PY
+  duration_seconds="$(python - <<PY
 import yaml
 with open("${scenario_path}", "r", encoding="utf-8") as f:
     cfg = yaml.safe_load(f)
@@ -86,56 +93,63 @@ print(int(cfg["duration_seconds"]))
 PY
 )"
 
+  metric_duration_seconds=$(( duration_seconds + DRAIN_TIMEOUT_SECONDS + 5 ))
+
   for replica_count in ${REPLICAS}; do
     run_dir="${run_root}/${scenario_name}/replicas_${replica_count}"
     mkdir -p "${run_dir}"
 
-    log "========================================"
+    log "--------------------------------------------------"
     log "Scenario: ${scenario_name}"
     log "Replicas: ${replica_count}"
     log "Run dir: ${run_dir}"
-    log "========================================"
+    log "--------------------------------------------------"
 
-    # Turn autoscaling off if you have a helper for that.
-    # If not, this manual scale step is enough for a first version.
+    log "Scaling deployment ${DEPLOYMENT_NAME} to ${replica_count} replicas"
     kubectl scale deployment "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --replicas="${replica_count}"
 
-    log "Waiting for deployment rollout..."
-    kubectl rollout status deployment "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --timeout=300s
+    log "Waiting for rollout to complete..."
+    kubectl rollout status deployment "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --timeout=600s
 
-    log "Starting Prometheus metrics collection..."
-    python3 "${REPO_ROOT}/scripts/metrics/collect_metrics.py" \
+    log "Starting Prometheus metric collection..."
+    python -u "${REPO_ROOT}/scripts/metrics/collect_metrics.py" \
       --prom-url "${PROM_URL}" \
-      --duration-seconds "${duration_seconds}" \
+      --duration-seconds "${metric_duration_seconds}" \
       --interval-seconds "${METRIC_INTERVAL}" \
       --deployment-name "${DEPLOYMENT_NAME}" \
+      --namespace "${NAMESPACE}" \
       --outcsv "${run_dir}/system_metrics.csv" &
     METRICS_PID=$!
 
     log "Running benchmark traffic..."
-    python3 "${REPO_ROOT}/scripts/benchmark/run_benchmark.py" \
+    python -u "${REPO_ROOT}/scripts/benchmark/run_benchmark.py" \
       --target "${TARGET}" \
       --model-name "${SERVED_MODEL_NAME}" \
       --scenario "${scenario_path}" \
       --outdir "${run_dir}" \
-      --timeout-seconds "${TIMEOUT_SECONDS}" \
-      --max-in-flight "${MAX_IN_FLIGHT}"
+      --max-in-flight "${MAX_IN_FLIGHT}" \
+      --timeout-seconds "${BENCH_TIMEOUT_SECONDS}" \
+      --drain-timeout-seconds "${DRAIN_TIMEOUT_SECONDS}"
 
-    wait "${METRICS_PID}" || true
+    log "Waiting for metrics collector to finish..."
+    wait "${METRICS_PID}"
 
     cat > "${run_dir}/metadata.json" <<EOF
 {
+  "model_file": "${MODEL_FILE}",
   "model_key": "${MODEL_KEY}",
   "served_model_name": "${SERVED_MODEL_NAME}",
   "namespace": "${NAMESPACE}",
-  "llmisvc_name": "${LLMISVC_NAME}",
   "deployment_name": "${DEPLOYMENT_NAME}",
-  "local_port": ${LOCAL_PORT},
-  "remote_port": ${REMOTE_PORT},
-  "target": "${TARGET}",
   "scenario": "${scenario_name}",
+  "scenario_path": "${scenario_path}",
   "replicas": ${replica_count},
-  "metric_interval_seconds": ${METRIC_INTERVAL}
+  "target": "${TARGET}",
+  "prom_url": "${PROM_URL}",
+  "metric_interval_seconds": ${METRIC_INTERVAL},
+  "benchmark_timeout_seconds": ${BENCH_TIMEOUT_SECONDS},
+  "drain_timeout_seconds": ${DRAIN_TIMEOUT_SECONDS},
+  "max_in_flight": ${MAX_IN_FLIGHT}
 }
 EOF
 
@@ -145,4 +159,4 @@ EOF
 done
 
 log "Benchmark matrix complete."
-log "Results saved in: ${run_root}"
+log "Results saved under: ${run_root}"

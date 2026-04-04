@@ -1,0 +1,25 @@
+name: conversation-realistic
+description: Realistic instruction/chat-like workload using Dolly-15k prompts
+request_type: completions
+arrival_pattern: poisson
+duration_seconds: 30
+mean_rps: 0.15
+warmup_seconds: 0
+cooldown_seconds: 0
+
+dataset:
+  mode: jsonl
+  path: data/processed/dolly_15k_realistic.jsonl
+  source: databricks/databricks-dolly-15k
+
+prompt:
+  style: dataset_prompt
+  min_tokens: 16
+  max_tokens: 256
+
+output:
+  max_tokens: 48
+
+slo:
+  ttft_p95_ms: 5000
+  e2e_p95_ms: 10000

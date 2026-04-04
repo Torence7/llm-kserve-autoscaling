@@ -26,6 +26,18 @@ resolve_model_file() {
     return 0
   fi
 
+  local f
+  while IFS= read -r -d '' f; do
+    local mk llm name
+    mk="$(yq -r '.model_key // ""' "$f" 2>/dev/null || true)"
+    llm="$(yq -r '.llmisvc_name // ""' "$f" 2>/dev/null || true)"
+    name="$(basename "$f" .yaml)"
+    if [[ "$arg" == "$mk" || "$arg" == "$llm" || "$arg" == "$name" ]]; then
+      echo "$f"
+      return 0
+    fi
+  done < <(find "${root}/configs/models" -maxdepth 1 -name '*.yaml' -print0)
+
   die "Could not resolve model config: $arg"
 }
 
@@ -141,4 +153,9 @@ load_model_config() {
   [[ -n "$HF_MODEL_ID" ]] || die "hf_model_id missing in $MODEL_FILE"
   [[ -n "$SERVED_MODEL_NAME" ]] || die "served_model_name missing in $MODEL_FILE"
   [[ -n "$IMAGE" ]] || die "image missing in $MODEL_FILE"
+
+  WORKLOAD_LABEL_NAME="$(yaml_get_or_default '.workload_label_name' "$MODEL_FILE" "$LLMISVC_NAME")"
+  METRICS_PORT="$(yaml_get_or_default '.metrics_port' "$MODEL_FILE" "$REMOTE_PORT")"
+  METRICS_PATH="$(yaml_get_or_default '.metrics_path' "$MODEL_FILE" "/metrics")"
+  METRICS_SCRAPE_INTERVAL="$(yaml_get_or_default '.metrics_scrape_interval' "$MODEL_FILE" "15s")"
 }

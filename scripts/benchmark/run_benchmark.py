@@ -4,9 +4,7 @@ import asyncio
 import csv
 import json
 import math
-import os
 import random
-import statistics
 import string
 import time
 from dataclasses import dataclass
@@ -48,7 +46,6 @@ def random_id(k: int = 10) -> str:
 
 
 def estimate_tokens_from_text(text: str) -> int:
-    # Rough fallback for logging only.
     return max(1, math.ceil(len(text.split()) * 1.33))
 
 
@@ -60,7 +57,7 @@ def clamp_prompt_tokens(text: str, min_tokens: int, max_tokens: int) -> str:
     target = random.randint(min_tokens, max_tokens)
     while estimate_tokens_from_text(" ".join(words)) < target:
         words.extend(words[: min(len(words), 20)] or ["benchmark"])
-    return " ".join(words[: max(len(words), len(words))])
+    return " ".join(words)
 
 
 def build_prompt_from_scenario(cfg: Dict[str, Any]) -> Dict[str, Any]:
@@ -91,9 +88,8 @@ def build_prompt_from_scenario(cfg: Dict[str, Any]) -> Dict[str, Any]:
         item = random.choice(messages_pool)
         system_msg = item["system"]
         user_msg = item["user"]
-        base = f"{system_msg}\n\n{user_msg}"
         expanded = clamp_prompt_tokens(
-            base,
+            f"{system_msg}\n\n{user_msg}",
             prompt_cfg["min_tokens"],
             prompt_cfg["max_tokens"],
         )
@@ -126,6 +122,22 @@ def constant_wait(rps: float) -> float:
     return 1.0 / rps
 
 
+def percentile(values: List[float], p: float) -> Optional[float]:
+    if not values:
+        return None
+    values_sorted = sorted(values)
+    if len(values_sorted) == 1:
+        return float(values_sorted[0])
+    k = (len(values_sorted) - 1) * (p / 100.0)
+    f = math.floor(k)
+    c = math.ceil(k)
+    if f == c:
+        return float(values_sorted[int(k)])
+    d0 = values_sorted[f] * (c - k)
+    d1 = values_sorted[c] * (k - f)
+    return float(d0 + d1)
+
+
 async def send_one_request(
     session: aiohttp.ClientSession,
     endpoint_base: str,
@@ -139,7 +151,6 @@ async def send_one_request(
 ) -> RequestResult:
     req_id = random_id()
     url = endpoint_base.rstrip("/") + ("/chat/completions" if request_type == "chat" else "/completions")
-    start = time.time()
 
     if request_type == "chat":
         body = {
@@ -161,9 +172,14 @@ async def send_one_request(
         prompt_chars = len(payload_inputs["prompt"])
 
     async with semaphore:
+        start = time.time()
         try:
-            async with session.post(url, json=body, timeout=aiohttp.ClientTimeout(total=timeout_s)) as resp:
-                ttft_ms = (time.time() - start) * 1000.0  # proxy TTFT without streaming
+            async with session.post(
+                url,
+                json=body,
+                timeout=aiohttp.ClientTimeout(total=timeout_s),
+            ) as resp:
+                ttft_ms = (time.time() - start) * 1000.0
                 text = await resp.text()
                 end = time.time()
                 latency_ms = (end - start) * 1000.0
@@ -213,6 +229,28 @@ async def send_one_request(
             )
 
 
+async def drain_with_timeout(tasks: List[asyncio.Task], drain_timeout_s: float) -> List[RequestResult]:
+    if not tasks:
+        return []
+
+    done, pending = await asyncio.wait(tasks, timeout=drain_timeout_s)
+    results: List[RequestResult] = []
+
+    for task in done:
+        try:
+            results.append(task.result())
+        except Exception:
+            pass
+
+    for task in pending:
+        task.cancel()
+
+    if pending:
+        await asyncio.gather(*pending, return_exceptions=True)
+
+    return results
+
+
 async def benchmark_main(args: argparse.Namespace) -> None:
     scenario_cfg = load_yaml(args.scenario)
     outdir = Path(args.outdir)
@@ -224,19 +262,39 @@ async def benchmark_main(args: argparse.Namespace) -> None:
     scenario_name = scenario_cfg["name"]
     timeout_s = float(args.timeout_seconds)
     max_in_flight = int(args.max_in_flight)
+    drain_timeout_s = float(args.drain_timeout_seconds)
 
     mean_rps = scenario_cfg.get("mean_rps")
     rps = scenario_cfg.get("rps")
 
+    print(
+        json.dumps(
+            {
+                "scenario": scenario_name,
+                "request_type": request_type,
+                "duration_seconds": duration,
+                "arrival_pattern": arrival_pattern,
+                "target": args.target,
+                "model_name": args.model_name,
+                "max_in_flight": max_in_flight,
+                "timeout_seconds": timeout_s,
+                "drain_timeout_seconds": drain_timeout_s,
+            },
+            indent=2,
+        ),
+        flush=True,
+    )
+
     semaphore = asyncio.Semaphore(max_in_flight)
     tasks: List[asyncio.Task] = []
-    t0 = time.time()
-    t_end = t0 + duration
+    t_end = time.time() + duration
+    launched = 0
 
     async with aiohttp.ClientSession() as session:
         while time.time() < t_end:
             payload_inputs = build_prompt_from_scenario(scenario_cfg)
             max_tokens = choose_max_tokens(scenario_cfg)
+
             task = asyncio.create_task(
                 send_one_request(
                     session=session,
@@ -251,6 +309,10 @@ async def benchmark_main(args: argparse.Namespace) -> None:
                 )
             )
             tasks.append(task)
+            launched += 1
+
+            if launched % 5 == 0:
+                print(f"Launched {launched} requests so far...", flush=True)
 
             if arrival_pattern == "poisson":
                 await asyncio.sleep(poisson_wait(float(mean_rps)))
@@ -259,9 +321,11 @@ async def benchmark_main(args: argparse.Namespace) -> None:
             else:
                 raise ValueError(f"Unsupported arrival pattern: {arrival_pattern}")
 
-        results = await asyncio.gather(*tasks)
+        print(f"Launch phase done. Waiting up to {drain_timeout_s}s for {len(tasks)} tasks...", flush=True)
+        results = await drain_with_timeout(tasks, drain_timeout_s)
 
     requests_csv = outdir / "requests.csv"
+    print(f"Writing request results to {requests_csv}", flush=True)
     with open(requests_csv, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow([
@@ -283,7 +347,9 @@ async def benchmark_main(args: argparse.Namespace) -> None:
         "target": args.target,
         "model_name": args.model_name,
         "duration_seconds": duration,
-        "requests_total": len(results),
+        "drain_timeout_seconds": drain_timeout_s,
+        "requests_launched": launched,
+        "requests_total_recorded": len(results),
         "requests_ok": len(ok_results),
         "requests_failed": len(results) - len(ok_results),
         "latency_p50_ms": percentile([r.latency_ms for r in ok_results], 50),
@@ -291,26 +357,13 @@ async def benchmark_main(args: argparse.Namespace) -> None:
         "ttft_p50_ms": percentile([r.ttft_ms for r in ok_results], 50),
         "ttft_p95_ms": percentile([r.ttft_ms for r in ok_results], 95),
     }
-    with open(outdir / "summary.json", "w", encoding="utf-8") as f:
+
+    summary_path = outdir / "summary.json"
+    print(f"Writing summary to {summary_path}", flush=True)
+    with open(summary_path, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
 
-    print(json.dumps(summary, indent=2))
-
-
-def percentile(values: List[float], p: float) -> Optional[float]:
-    if not values:
-        return None
-    values_sorted = sorted(values)
-    if len(values_sorted) == 1:
-        return float(values_sorted[0])
-    k = (len(values_sorted) - 1) * (p / 100.0)
-    f = math.floor(k)
-    c = math.ceil(k)
-    if f == c:
-        return float(values_sorted[int(k)])
-    d0 = values_sorted[f] * (c - k)
-    d1 = values_sorted[c] * (k - f)
-    return float(d0 + d1)
+    print(json.dumps(summary, indent=2), flush=True)
 
 
 def parse_args() -> argparse.Namespace:
@@ -319,8 +372,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--model-name", required=True, help="Served model name to send in request payload")
     p.add_argument("--scenario", required=True, help="Path to scenario YAML")
     p.add_argument("--outdir", required=True, help="Directory to write results")
-    p.add_argument("--timeout-seconds", type=float, default=180.0)
-    p.add_argument("--max-in-flight", type=int, default=32)
+    p.add_argument("--timeout-seconds", type=float, default=60.0)
+    p.add_argument("--max-in-flight", type=int, default=4)
+    p.add_argument("--drain-timeout-seconds", type=float, default=10.0)
     return p.parse_args()
 
 
