@@ -8,11 +8,11 @@ source "${SCRIPT_DIR}/lib/model.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/apply_keda_scaledobject.sh --model <model-name|path>
+  scripts/apply_keda_scaledobject.sh --model <model-name|path> [--policy <policy-name|path>]
 
 Description:
-  Loads the model config, resolves its referenced scaling policy from
-  configs/policies/, and applies the corresponding KEDA ScaledObject.
+  Loads the model config, optionally overrides the scaling policy,
+  and applies the corresponding KEDA ScaledObject for that policy.
 
 Supported policy types:
   - keda-prometheus
@@ -21,11 +21,16 @@ EOF
 }
 
 MODEL_ARG=""
+POLICY_ARG=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --model)
       MODEL_ARG="${2:-}"
+      shift 2
+      ;;
+    --policy)
+      POLICY_ARG="${2:-}"
       shift 2
       ;;
     -h|--help)
@@ -45,6 +50,12 @@ done
 
 load_model_config "$MODEL_ARG"
 
+if [[ -n "$POLICY_ARG" ]]; then
+  load_policy_config "$POLICY_ARG"
+fi
+
+KEDA_SCALEDOBJECT_NAME="$(yaml_get_or_default '.keda_scaledobject_name' "$MODEL_FILE" "$(sanitize_name "${MODEL_KEY}")-${POLICY_KEY}")"
+
 kubectl get crd scaledobjects.keda.sh >/dev/null 2>&1 || {
   echo "ERROR: KEDA CRDs not found."
   echo "Run scripts/install_keda.sh first."
@@ -57,12 +68,39 @@ kubectl get deploy -n "$NAMESPACE" "$WORKER_DEPLOYMENT_NAME" >/dev/null 2>&1 || 
   exit 1
 }
 
+case "$POLICY_TYPE" in
+  keda-prometheus|keda-composite)
+    ;;
+  *)
+    die "Policy '${POLICY_KEY}' is not a KEDA policy. Found policy_type='${POLICY_TYPE}'"
+    ;;
+esac
+
+delete_scaledobjects_for_target() {
+  local so_names
+  so_names="$(
+    kubectl get scaledobject -n "$NAMESPACE" \
+      -o jsonpath="{range .items[?(@.spec.scaleTargetRef.name==\"${WORKER_DEPLOYMENT_NAME}\")]}{.metadata.name}{'\n'}{end}" \
+      2>/dev/null || true
+  )"
+
+  if [[ -n "$so_names" ]]; then
+    while IFS= read -r so_name; do
+      [[ -n "$so_name" ]] || continue
+      log "Deleting existing ScaledObject ${so_name} targeting ${WORKER_DEPLOYMENT_NAME}"
+      kubectl delete scaledobject -n "$NAMESPACE" "$so_name" --ignore-not-found >/dev/null 2>&1 || true
+    done <<< "$so_names"
+  fi
+}
+
 log "Model: ${MODEL_KEY}"
 log "Policy: ${POLICY_KEY} (${POLICY_TYPE})"
 log "Target deployment: ${WORKER_DEPLOYMENT_NAME}"
 
-log "Deleting existing HPAs in ${NAMESPACE} to avoid HPA/KEDA conflicts"
-kubectl delete hpa -n "$NAMESPACE" --all --ignore-not-found >/dev/null 2>&1 || true
+log "Deleting existing HPA ${WORKER_DEPLOYMENT_NAME} in ${NAMESPACE} to avoid HPA/KEDA conflicts"
+kubectl delete hpa -n "$NAMESPACE" "${WORKER_DEPLOYMENT_NAME}" --ignore-not-found >/dev/null 2>&1 || true
+
+delete_scaledobjects_for_target
 
 render_prometheus_trigger() {
   local name="$1"

@@ -63,6 +63,7 @@ done
 
 need_model_tools
 need_cmd python
+
 load_model_config "${MODEL_ARG}"
 load_policy_config "${POLICY_ARG}"
 
@@ -109,10 +110,15 @@ log "Results dir: ${run_dir}"
 log "Applying policy ${POLICY_KEY} ..."
 case "${POLICY_TYPE}" in
   hpa|hpa-cpu)
-    bash "${REPO_ROOT}/scripts/create_hpa.sh" --model "${MODEL_FILE}"
+    bash "${REPO_ROOT}/scripts/create_hpa.sh" \
+      --model "${MODEL_FILE}" \
+      --policy "${POLICY_FILE}"
+    kubectl get hpa -n "${NAMESPACE}" || true
     ;;
-  keda|keda-prometheus)
-    bash "${REPO_ROOT}/scripts/apply_keda_scaledobject.sh" --model "${MODEL_FILE}"
+  keda|keda-prometheus|keda-composite)
+    bash "${REPO_ROOT}/scripts/apply_keda_scaledobject.sh" \
+      --model "${MODEL_FILE}" \
+      --policy "${POLICY_FILE}"
     kubectl get scaledobject -n "${NAMESPACE}" || true
     ;;
   *)
