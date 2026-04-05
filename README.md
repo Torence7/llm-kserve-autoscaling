@@ -194,6 +194,12 @@ run the same generic scripts with --model <new-model>
 
 This repo supports policy-based benchmarking for comparing autoscaling strategies under the same workload scenario.
 
+A policy run does the following:
+- applies the selected autoscaling policy
+- runs the benchmark workload for the selected scenario
+- collects client-side benchmark results
+- samples Prometheus-backed system metrics during the run
+
 ### Prerequisites
 
 Make sure these are already running:
@@ -211,9 +217,13 @@ source .venv/bin/activate
 bash scripts/portforward_model.sh --model qwen25-0.5b-instruct
 kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090
 ```
-Run one policy evaluation
+
+Keep both port-forwards running in separate terminals while the benchmark is executing.
+
+### Run one policy evaluation
 
 Example HPA CPU baseline run:
+
 ```bash
 source .venv/bin/activate
 PROM_URL="http://localhost:9090" \
@@ -222,7 +232,9 @@ bash scripts/benchmark/run_policy_eval.sh \
   --policy hpa-cpu-baseline \
   --scenario short-bursts
 ```
+
 Example KEDA run:
+
 ```bash
 source .venv/bin/activate
 PROM_URL="http://localhost:9090" \
@@ -231,3 +243,39 @@ bash scripts/benchmark/run_policy_eval.sh \
   --policy keda-waiting-requests \
   --scenario short-bursts
 ```
+
+### Compare multiple policies on the same scenario
+
+Run the same scenario with different policies to compare behavior under identical load:
+
+```bash
+source .venv/bin/activate
+
+PROM_URL="http://localhost:9090" \
+bash scripts/benchmark/run_policy_eval.sh \
+  --model qwen25-0.5b-instruct \
+  --policy hpa-cpu-baseline \
+  --scenario short-bursts
+
+PROM_URL="http://localhost:9090" \
+bash scripts/benchmark/run_policy_eval.sh \
+  --model qwen25-0.5b-instruct \
+  --policy keda-waiting-requests \
+  --scenario short-bursts
+```
+
+### Outputs
+
+Each run writes a timestamped results directory containing benchmark outputs and sampled system metrics.
+
+Typical artifacts include:
+- a benchmark summary
+- per-request logs
+- sampled system metrics such as running requests, waiting requests, throughput, KV-cache usage, and ready replicas
+
+### Notes
+
+- `PROM_URL` should point to the local Prometheus port-forward used during the run.
+- use the same model and scenario across policies for fair comparisons
+- make sure the selected policy is successfully applied before starting the benchmark
+- keep Prometheus and model port-forwards active in separate terminals during the run
