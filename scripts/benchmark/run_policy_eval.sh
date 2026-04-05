@@ -101,6 +101,7 @@ log "Policy type: ${POLICY_TYPE}"
 log "Scenario: ${SCENARIO_NAME}"
 log "Scenario path: ${SCENARIO_PATH}"
 log "Deployment name: ${DEPLOYMENT_NAME}"
+log "Served model name: ${SERVED_MODEL_NAME}"
 log "Namespace: ${NAMESPACE}"
 log "Target endpoint: ${TARGET}"
 log "Results dir: ${run_dir}"
@@ -113,7 +114,7 @@ case "${POLICY_TYPE}" in
   keda|keda-prometheus)
     bash "${REPO_ROOT}/scripts/apply_keda_scaledobject.sh" --model "${MODEL_FILE}"
     kubectl get scaledobject -n "${NAMESPACE}" || true
-  ;;
+    ;;
   *)
     die "Unsupported policy_type for policy eval: ${POLICY_TYPE}"
     ;;
@@ -128,6 +129,7 @@ python -u "${REPO_ROOT}/scripts/metrics/collect_metrics.py" \
   --duration-seconds "${metric_duration_seconds}" \
   --interval-seconds "${METRIC_INTERVAL}" \
   --deployment-name "${DEPLOYMENT_NAME}" \
+  --model-name "${SERVED_MODEL_NAME}" \
   --namespace "${NAMESPACE}" \
   --outcsv "${run_dir}/system_metrics.csv" &
 METRICS_PID=$!

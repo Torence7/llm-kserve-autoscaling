@@ -12,8 +12,8 @@
   "requests_total_recorded": 5,
   "requests_ok": 5,
   "requests_failed": 0,
-  "latency_p50_ms": 4401.721715927124,
-  "latency_p95_ms": 4436.11102104187,
-  "ttft_p50_ms": 4401.692628860474,
-  "ttft_p95_ms": 4436.052322387695
+  "latency_p50_ms": 4084.4833850860596,
+  "latency_p95_ms": 4549.4025230407715,
+  "ttft_p50_ms": 4084.444046020508,
+  "ttft_p95_ms": 4549.360466003418
 }

@@ -1,9 +1,0 @@
-timestamp,num_requests_running,num_requests_waiting,avg_generation_throughput_toks_per_s,kv_cache_usage_perc,ready_replicas
-1775277088.9648967,,,,,
-1775277093.9709604,,,,,
-1775277098.9772067,,,,,
-1775277103.983722,,,,,
-1775277108.990485,,,,,
-1775277113.9980342,,,,,
-1775277119.0067308,,,,,
-1775277124.0161345,,,,,

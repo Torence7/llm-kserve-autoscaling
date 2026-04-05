@@ -5,12 +5,15 @@
   "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
   "duration_seconds": 30,
   "drain_timeout_seconds": 5.0,
+  "dataset_mode": "synthetic",
+  "dataset_path": null,
+  "dataset_rows": 0,
   "requests_launched": 5,
   "requests_total_recorded": 5,
   "requests_ok": 5,
   "requests_failed": 0,
-  "latency_p50_ms": 3980.1645278930664,
-  "latency_p95_ms": 4496.960163116455,
-  "ttft_p50_ms": 3980.117082595825,
-  "ttft_p95_ms": 4496.916627883911
+  "latency_p50_ms": 4171.642541885376,
+  "latency_p95_ms": 4364.907503128052,
+  "ttft_p50_ms": 4171.60177230835,
+  "ttft_p95_ms": 4364.849615097046
 }

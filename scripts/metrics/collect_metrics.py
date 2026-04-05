@@ -9,13 +9,9 @@ from typing import Dict, Optional
 import requests
 
 
-DEFAULT_QUERIES = {
-    "num_requests_running": "vllm:num_requests_running",
-    "num_requests_waiting": "vllm:num_requests_waiting",
-    "avg_generation_throughput_toks_per_s": "vllm:avg_generation_throughput_toks_per_s",
-    "kv_cache_usage_perc": "vllm:kv_cache_usage_perc",
-    "ready_replicas_template": 'kube_deployment_status_replicas_ready{{deployment="{deployment}", namespace="{namespace}"}}',
-}
+READY_REPLICAS_TEMPLATE = (
+    'kube_deployment_status_replicas_ready{{deployment="{deployment}", namespace="{namespace}"}}'
+)
 
 
 def prom_query(prom_url: str, query: str, timeout_s: float = 10.0) -> Optional[float]:
@@ -25,10 +21,16 @@ def prom_query(prom_url: str, query: str, timeout_s: float = 10.0) -> Optional[f
         resp.raise_for_status()
         payload = resp.json()
         results = payload.get("data", {}).get("result", [])
+
         if not results:
             return None
+
+        if len(results) > 1:
+            raise ValueError(f"Query returned multiple series, expected one: {query}")
+
         return float(results[0]["value"][1])
-    except Exception:
+    except Exception as e:
+        print(f"[WARN] Prometheus query failed: {query} | error: {e}", flush=True)
         return None
 
 
@@ -44,21 +46,67 @@ def write_row(writer: csv.writer, row: Dict[str, Optional[float]]) -> None:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Poll Prometheus during a benchmark run and save system metrics.")
-    ap.add_argument("--prom-url", required=True, help="Prometheus base URL, e.g. http://localhost:9090")
-    ap.add_argument("--duration-seconds", type=int, required=True, help="How long to poll for")
-    ap.add_argument("--interval-seconds", type=int, default=5, help="Polling interval")
-    ap.add_argument("--deployment-name", required=True, help="Kubernetes deployment name")
-    ap.add_argument("--namespace", default="llm-demo", help="Kubernetes namespace for ready replica query")
-    ap.add_argument("--outcsv", required=True, help="CSV path to write")
+    ap = argparse.ArgumentParser(
+        description="Poll Prometheus during a benchmark run and save system metrics."
+    )
+    ap.add_argument(
+        "--prom-url",
+        required=True,
+        help="Prometheus base URL, e.g. http://localhost:9090",
+    )
+    ap.add_argument(
+        "--duration-seconds",
+        type=int,
+        required=True,
+        help="How long to poll for",
+    )
+    ap.add_argument(
+        "--interval-seconds",
+        type=int,
+        default=5,
+        help="Polling interval",
+    )
+    ap.add_argument(
+        "--deployment-name",
+        required=True,
+        help="Kubernetes deployment name for ready replica query",
+    )
+    ap.add_argument(
+        "--model-name",
+        required=True,
+        help='vLLM model_name label, e.g. "Qwen/Qwen2.5-0.5B-Instruct"',
+    )
+    ap.add_argument(
+        "--namespace",
+        default="llm-demo",
+        help="Kubernetes namespace for ready replica query",
+    )
+    ap.add_argument(
+        "--outcsv",
+        required=True,
+        help="CSV path to write",
+    )
     args = ap.parse_args()
 
     outcsv = Path(args.outcsv)
     outcsv.parent.mkdir(parents=True, exist_ok=True)
 
-    ready_q = DEFAULT_QUERIES["ready_replicas_template"].format(
+    ready_q = READY_REPLICAS_TEMPLATE.format(
         deployment=args.deployment_name,
         namespace=args.namespace,
+    )
+
+    num_requests_running_q = (
+        f'vllm:num_requests_running{{model_name="{args.model_name}"}}'
+    )
+    num_requests_waiting_q = (
+        f'vllm:num_requests_waiting{{model_name="{args.model_name}"}}'
+    )
+    kv_cache_usage_q = (
+        f'vllm:kv_cache_usage_perc{{model_name="{args.model_name}"}}'
+    )
+    generation_throughput_q = (
+        f'rate(vllm:generation_tokens_total{{model_name="{args.model_name}"}}[1m])'
     )
 
     end_time = time.time() + args.duration_seconds
@@ -81,8 +129,16 @@ def main() -> None:
                     "duration_seconds": args.duration_seconds,
                     "interval_seconds": args.interval_seconds,
                     "deployment_name": args.deployment_name,
+                    "model_name": args.model_name,
                     "namespace": args.namespace,
                     "outcsv": str(outcsv),
+                    "queries": {
+                        "num_requests_running": num_requests_running_q,
+                        "num_requests_waiting": num_requests_waiting_q,
+                        "avg_generation_throughput_toks_per_s": generation_throughput_q,
+                        "kv_cache_usage_perc": kv_cache_usage_q,
+                        "ready_replicas": ready_q,
+                    },
                 },
                 indent=2,
             ),
@@ -94,12 +150,10 @@ def main() -> None:
             now = time.time()
             row = {
                 "timestamp": now,
-                "num_requests_running": prom_query(args.prom_url, DEFAULT_QUERIES["num_requests_running"]),
-                "num_requests_waiting": prom_query(args.prom_url, DEFAULT_QUERIES["num_requests_waiting"]),
-                "avg_generation_throughput_toks_per_s": prom_query(
-                    args.prom_url, DEFAULT_QUERIES["avg_generation_throughput_toks_per_s"]
-                ),
-                "kv_cache_usage_perc": prom_query(args.prom_url, DEFAULT_QUERIES["kv_cache_usage_perc"]),
+                "num_requests_running": prom_query(args.prom_url, num_requests_running_q),
+                "num_requests_waiting": prom_query(args.prom_url, num_requests_waiting_q),
+                "avg_generation_throughput_toks_per_s": prom_query(args.prom_url, generation_throughput_q),
+                "kv_cache_usage_perc": prom_query(args.prom_url, kv_cache_usage_q),
                 "ready_replicas": prom_query(args.prom_url, ready_q),
             }
             write_row(writer, row)

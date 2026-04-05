@@ -24,6 +24,12 @@ done
 load_model_config "$MODEL_ARG"
 
 log "Applying monitoring resources for ${MODEL_KEY}"
+log "Namespace: ${NAMESPACE}"
+log "Metrics service name: ${METRICS_SERVICE_NAME}"
+log "ServiceMonitor name: ${SERVICE_MONITOR_NAME}"
+log "Workload label name: ${WORKLOAD_LABEL_NAME}"
+log "Metrics path: ${METRICS_PATH}"
+log "Metrics port: ${METRICS_PORT}"
 
 kubectl apply -f - <<EOF
 apiVersion: v1
@@ -48,6 +54,9 @@ metadata:
   name: ${SERVICE_MONITOR_NAME}
   namespace: ${NAMESPACE}
 spec:
+  namespaceSelector:
+    matchNames:
+      - ${NAMESPACE}
   selector:
     matchLabels:
       app: ${METRICS_SERVICE_NAME}
@@ -56,3 +65,9 @@ spec:
       path: ${METRICS_PATH}
       interval: ${METRICS_SCRAPE_INTERVAL}
 EOF
+
+log "Applied monitoring resources."
+log "Checking created resources..."
+kubectl get svc "${METRICS_SERVICE_NAME}" -n "${NAMESPACE}" || true
+kubectl get servicemonitor "${SERVICE_MONITOR_NAME}" -n "${NAMESPACE}" || true
+kubectl get endpoints "${METRICS_SERVICE_NAME}" -n "${NAMESPACE}" || true
