@@ -35,18 +35,6 @@ Optional environment variables:
   MAX_IN_FLIGHT=1
   COOLDOWN_SECONDS=20
 
-  AUTO_DEPLOY=0
-  AUTO_DELETE_MODEL=0
-  AUTO_PORT_FORWARD_MODEL=0
-  AUTO_PORT_FORWARD_PROM=0
-  AUTO_APPLY_MONITORING=0
-  PORT_FORWARD_WAIT_SECONDS=30
-
-  PROM_NAMESPACE="monitoring"
-  PROM_SERVICE="prometheus-kube-prometheus-prometheus"
-  PROM_LOCAL_PORT=9090
-  PROM_REMOTE_PORT=9090
-
 Examples:
   # Run everything in configs/models, configs/policies, configs/scenarios once
   REPEATS=1 bash scripts/benchmark/run_full_benchmark_suite.sh
@@ -70,7 +58,6 @@ need_cmd python
 need_cmd find
 need_cmd sort
 need_cmd comm
-need_cmd kubectl
 
 default_model_list="$(
   find "${REPO_ROOT}/configs/models" -maxdepth 1 -name '*.yaml' -type f \
@@ -110,16 +97,6 @@ BENCH_TIMEOUT_SECONDS="${BENCH_TIMEOUT_SECONDS:-15}"
 DRAIN_TIMEOUT_SECONDS="${DRAIN_TIMEOUT_SECONDS:-5}"
 MAX_IN_FLIGHT="${MAX_IN_FLIGHT:-1}"
 COOLDOWN_SECONDS="${COOLDOWN_SECONDS:-20}"
-AUTO_DEPLOY="${AUTO_DEPLOY:-0}"
-AUTO_DELETE_MODEL="${AUTO_DELETE_MODEL:-0}"
-AUTO_PORT_FORWARD_MODEL="${AUTO_PORT_FORWARD_MODEL:-0}"
-AUTO_PORT_FORWARD_PROM="${AUTO_PORT_FORWARD_PROM:-0}"
-AUTO_APPLY_MONITORING="${AUTO_APPLY_MONITORING:-0}"
-PORT_FORWARD_WAIT_SECONDS="${PORT_FORWARD_WAIT_SECONDS:-30}"
-PROM_NAMESPACE="${PROM_NAMESPACE:-monitoring}"
-PROM_SERVICE="${PROM_SERVICE:-prometheus-kube-prometheus-prometheus}"
-PROM_LOCAL_PORT="${PROM_LOCAL_PORT:-9090}"
-PROM_REMOTE_PORT="${PROM_REMOTE_PORT:-9090}"
 
 [[ -n "${MODEL_LIST}" ]] || die "MODEL_LIST is empty"
 [[ -n "${POLICY_LIST}" ]] || die "POLICY_LIST is empty"
@@ -132,116 +109,6 @@ mkdir -p "${suite_root}"
 summary_tsv="${suite_root}/summary.tsv"
 printf 'run_index\tmodel\tpolicy\tscenario\trepeat\texit_code\trun_dir\tlog_file\n' > "${summary_tsv}"
 
-MODEL_PF_PID=""
-PROM_PF_PID=""
-
-wait_for_tcp() {
-  local host="$1"
-  local port="$2"
-  local timeout_seconds="$3"
-  local waited=0
-  while (( waited < timeout_seconds )); do
-    if (echo >"/dev/tcp/${host}/${port}") >/dev/null 2>&1; then
-      return 0
-    fi
-    sleep 1
-    waited=$((waited + 1))
-  done
-  return 1
-}
-
-stop_pid_if_running() {
-  local pid="${1:-}"
-  if [[ -n "${pid}" ]] && kill -0 "${pid}" >/dev/null 2>&1; then
-    kill "${pid}" >/dev/null 2>&1 || true
-    wait "${pid}" >/dev/null 2>&1 || true
-  fi
-}
-
-cleanup_background_jobs() {
-  stop_pid_if_running "${MODEL_PF_PID}"
-  stop_pid_if_running "${PROM_PF_PID}"
-}
-trap cleanup_background_jobs EXIT
-
-start_prometheus_port_forward() {
-  local log_file="$1"
-  if [[ "${AUTO_PORT_FORWARD_PROM}" != "1" ]]; then
-    return 0
-  fi
-  if wait_for_tcp "127.0.0.1" "${PROM_LOCAL_PORT}" 1; then
-    log "Prometheus local port ${PROM_LOCAL_PORT} already reachable; reusing existing endpoint."
-    return 0
-  fi
-  log "Starting Prometheus port-forward: svc/${PROM_SERVICE} ${PROM_LOCAL_PORT}:${PROM_REMOTE_PORT} (ns=${PROM_NAMESPACE})"
-  kubectl port-forward -n "${PROM_NAMESPACE}" "svc/${PROM_SERVICE}" "${PROM_LOCAL_PORT}:${PROM_REMOTE_PORT}" > "${log_file}" 2>&1 &
-  PROM_PF_PID=$!
-  if ! wait_for_tcp "127.0.0.1" "${PROM_LOCAL_PORT}" "${PORT_FORWARD_WAIT_SECONDS}"; then
-    die "Prometheus port-forward did not become ready on localhost:${PROM_LOCAL_PORT}"
-  fi
-}
-
-validate_prometheus_endpoint_or_die() {
-  if [[ "${AUTO_PORT_FORWARD_PROM}" == "1" ]]; then
-    return 0
-  fi
-  if ! wait_for_tcp "127.0.0.1" "${PROM_LOCAL_PORT}" 1; then
-    die "Prometheus endpoint is not reachable on localhost:${PROM_LOCAL_PORT}. Start port-forward or set AUTO_PORT_FORWARD_PROM=1."
-  fi
-}
-
-deploy_model_if_enabled() {
-  local model="$1"
-  if [[ "${AUTO_DEPLOY}" != "1" ]]; then
-    return 0
-  fi
-  log "Auto-deploy enabled. Deploying model ${model} ..."
-  bash "${REPO_ROOT}/scripts/deploy_model.sh" --model "${model}"
-  log "Waiting for deployment/${WORKER_DEPLOYMENT_NAME} rollout ..."
-  kubectl rollout status deployment "${WORKER_DEPLOYMENT_NAME}" -n "${NAMESPACE}" --timeout=900s
-}
-
-start_model_port_forward_if_enabled() {
-  local log_file="$1"
-  if [[ "${AUTO_PORT_FORWARD_MODEL}" != "1" ]]; then
-    return 0
-  fi
-  stop_pid_if_running "${MODEL_PF_PID}"
-  MODEL_PF_PID=""
-  log "Starting model port-forward: svc/${WORKLOAD_SERVICE_NAME} ${LOCAL_PORT}:${REMOTE_PORT} (ns=${NAMESPACE})"
-  kubectl port-forward -n "${NAMESPACE}" "svc/${WORKLOAD_SERVICE_NAME}" "${LOCAL_PORT}:${REMOTE_PORT}" > "${log_file}" 2>&1 &
-  MODEL_PF_PID=$!
-  if ! wait_for_tcp "127.0.0.1" "${LOCAL_PORT}" "${PORT_FORWARD_WAIT_SECONDS}"; then
-    die "Model port-forward did not become ready on localhost:${LOCAL_PORT} for ${MODEL_KEY}"
-  fi
-}
-
-validate_model_endpoint_or_die() {
-  if [[ "${AUTO_PORT_FORWARD_MODEL}" == "1" ]]; then
-    return 0
-  fi
-  if ! wait_for_tcp "127.0.0.1" "${LOCAL_PORT}" 1; then
-    die "Model endpoint for ${MODEL_KEY} is not reachable on localhost:${LOCAL_PORT}. Start port-forward or set AUTO_PORT_FORWARD_MODEL=1."
-  fi
-}
-
-delete_model_if_enabled() {
-  if [[ "${AUTO_DELETE_MODEL}" != "1" ]]; then
-    return 0
-  fi
-  log "Auto-delete enabled. Deleting LLMInferenceService ${LLMISVC_NAME} in namespace ${NAMESPACE} ..."
-  kubectl delete llminferenceservice "${LLMISVC_NAME}" -n "${NAMESPACE}" --ignore-not-found
-}
-
-apply_monitoring_if_enabled() {
-  local model="$1"
-  if [[ "${AUTO_APPLY_MONITORING}" != "1" ]]; then
-    return 0
-  fi
-  log "AUTO_APPLY_MONITORING=1 -> Applying monitoring resources for ${model} ..."
-  bash "${REPO_ROOT}/scripts/apply_monitoring.sh" --model "${model}"
-}
-
 log "=================================================="
 log "Full benchmark suite starting"
 log "Suite root: ${suite_root}"
@@ -250,23 +117,14 @@ log "Models: ${MODEL_LIST}"
 log "Policies: ${POLICY_LIST}"
 log "Scenarios: ${SCENARIO_LIST}"
 log "Repeats: ${REPEATS}"
-log "AUTO_DEPLOY=${AUTO_DEPLOY} AUTO_DELETE_MODEL=${AUTO_DELETE_MODEL} AUTO_PORT_FORWARD_MODEL=${AUTO_PORT_FORWARD_MODEL} AUTO_PORT_FORWARD_PROM=${AUTO_PORT_FORWARD_PROM}"
-log "AUTO_APPLY_MONITORING=${AUTO_APPLY_MONITORING}"
 log "=================================================="
 
 run_index=0
 failed_runs=0
 
-start_prometheus_port_forward "${suite_root}/prometheus_portforward.log"
-validate_prometheus_endpoint_or_die
-
 for model in ${MODEL_LIST}; do
   load_model_config "${model}"
   model_key_for_paths="${MODEL_KEY}"
-  deploy_model_if_enabled "${model}"
-  apply_monitoring_if_enabled "${model}"
-  start_model_port_forward_if_enabled "${suite_root}/model_portforward_${model_key_for_paths}.log"
-  validate_model_endpoint_or_die
 
   for policy in ${POLICY_LIST}; do
     for scenario in ${SCENARIO_LIST}; do
@@ -305,8 +163,6 @@ for model in ${MODEL_LIST}; do
         if [[ "${status}" -ne 0 ]]; then
           failed_runs=$((failed_runs + 1))
           log "Run ${run_index} FAILED (exit=${status})"
-          log "Recent log output for failed run:"
-          tail -n 20 "${run_log}" | sed 's/^/[run-log] /'
           if [[ "${FAIL_FAST}" == "1" ]]; then
             die "Stopping early because FAIL_FAST=1"
           fi
@@ -319,10 +175,6 @@ for model in ${MODEL_LIST}; do
       done
     done
   done
-
-  stop_pid_if_running "${MODEL_PF_PID}"
-  MODEL_PF_PID=""
-  delete_model_if_enabled
 done
 
 log "=================================================="
@@ -330,3 +182,4 @@ log "Suite complete. Total runs: ${run_index}, Failed runs: ${failed_runs}"
 log "Summary: ${summary_tsv}"
 log "Suite root: ${suite_root}"
 log "=================================================="
+
