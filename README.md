@@ -279,3 +279,161 @@ Typical artifacts include:
 - use the same model and scenario across policies for fair comparisons
 - make sure the selected policy is successfully applied before starting the benchmark
 - keep Prometheus and model port-forwards active in separate terminals during the run
+
+## Suggested next steps (if you're unsure what to do next)
+
+If you already have the stack running and you are deciding between "changing configs" vs "collecting data", the best next move is:
+
+1. **Collect a small but clean baseline dataset first** using the current setup.
+2. **Then change one variable at a time** (policy or scenario) and collect again.
+
+### 1) Baseline runs to collect first
+
+Run at least 3 repeated trials of this baseline combination:
+
+- model: `qwen25-0.5b-instruct`
+- scenario: `short-bursts`
+- policy: `hpa-cpu-baseline`
+
+Command:
+
+```bash
+source .venv/bin/activate
+for i in 1 2 3; do
+  PROM_URL="http://localhost:9090" \
+  bash scripts/benchmark/run_policy_eval.sh \
+    --model qwen25-0.5b-instruct \
+    --policy hpa-cpu-baseline \
+    --scenario short-bursts
+done
+```
+
+### 2) First comparison run
+
+Keep the same model + scenario, switch only policy:
+
+```bash
+source .venv/bin/activate
+for i in 1 2 3; do
+  PROM_URL="http://localhost:9090" \
+  bash scripts/benchmark/run_policy_eval.sh \
+    --model qwen25-0.5b-instruct \
+    --policy keda-waiting-requests \
+    --scenario short-bursts
+done
+```
+
+### 3) What to compare across runs
+
+From each run directory, compare:
+
+- p50 / p95 latency
+- total throughput (req/s or tokens/s)
+- scale-up delay (time from load increase to added replicas)
+- overprovisioning (replicas during low load)
+- error rate / timeout rate
+
+### 4) Decision rule before more tuning
+
+Before adding more complexity (new policies, new scenarios, or new models), confirm:
+
+- baseline variance is acceptable across repeats
+- one policy is consistently better on your primary metric
+- tradeoff is documented (e.g., lower p95 but more replicas/cost)
+
+Once this is true, move on to:
+
+- `long-context` scenario (same policies), then
+- a second model (same scenarios/policies),
+- then token-aware or composite KEDA policies.
+
+## Run all benchmarking automatically (multi-model + multi-policy)
+
+If you want to run this as a full experiment sweep, use:
+
+```bash
+bash scripts/benchmark/run_full_benchmark_suite.sh
+```
+
+The script automatically discovers all config files under:
+
+- `configs/models/*.yaml`
+- `configs/policies/*.yaml`
+- `configs/scenarios/*.yaml`
+
+Current model configs in this repo:
+
+- `facebook-opt-125m`
+- `phi3-mini-4k-instruct`
+- `qwen25-0.5b-instruct`
+- `tinyllama-1.1b-chat`
+
+Current policy configs in this repo:
+
+- `hpa-cpu-baseline`
+- `keda-token-aware`
+- `keda-token-cache-composite`
+- `keda-waiting-requests`
+
+Current scenario configs in this repo:
+
+- `conversation`
+- `conversation-realistic`
+- `long-context`
+- `short-bursts`
+- `sustained-mixed`
+
+### What to run (recommended sequence)
+
+1) Make sure your model endpoint and Prometheus are port-forwarded (in separate terminals):
+
+```bash
+bash scripts/portforward_model.sh --model qwen25-0.5b-instruct
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090
+```
+
+2) Activate the Python venv:
+
+```bash
+source .venv/bin/activate
+```
+
+3) Start a small pilot sweep (fast sanity check):
+
+```bash
+MODEL_LIST="qwen25-0.5b-instruct" \
+POLICY_LIST="hpa-cpu-baseline keda-waiting-requests" \
+SCENARIO_LIST="short-bursts long-context" \
+REPEATS=1 \
+bash scripts/benchmark/run_full_benchmark_suite.sh
+```
+
+4) Run the full suite:
+
+```bash
+REPEATS=3 \
+COOLDOWN_SECONDS=30 \
+PROM_URL="http://localhost:9090" \
+bash scripts/benchmark/run_full_benchmark_suite.sh
+```
+
+### Key environment variables for the suite script
+
+- `MODEL_LIST`: space-separated model keys (or model config names)
+- `POLICY_LIST`: space-separated policy keys
+- `SCENARIO_LIST`: space-separated scenario names
+- `REPEATS`: number of repeated trials for each model+policy+scenario combo
+- `FAIL_FAST`: `1` to stop on first failed run, `0` to continue
+- `RESULTS_ROOT`: where per-run policy eval artifacts are stored
+- `SUITE_RESULTS_ROOT`: where suite-level logs/summary are stored
+
+The script writes a suite summary TSV with one row per run:
+
+- run index
+- model
+- policy
+- scenario
+- repeat
+- exit code
+- discovered run directory
+- per-run log file
