@@ -4,7 +4,7 @@ import csv
 import json
 import time
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import requests
 
@@ -32,6 +32,14 @@ def prom_query(prom_url: str, query: str, timeout_s: float = 10.0) -> Optional[f
     except Exception as e:
         print(f"[WARN] Prometheus query failed: {query} | error: {e}", flush=True)
         return None
+
+
+def prom_query_first(prom_url: str, queries: List[str], timeout_s: float = 10.0) -> Optional[float]:
+    for q in queries:
+        value = prom_query(prom_url, q, timeout_s=timeout_s)
+        if value is not None:
+            return value
+    return None
 
 
 def write_row(writer: csv.writer, row: Dict[str, Optional[float]]) -> None:
@@ -96,18 +104,34 @@ def main() -> None:
         namespace=args.namespace,
     )
 
-    num_requests_running_q = (
-        f'vllm:num_requests_running{{model_name="{args.model_name}"}}'
-    )
-    num_requests_waiting_q = (
-        f'vllm:num_requests_waiting{{model_name="{args.model_name}"}}'
-    )
-    kv_cache_usage_q = (
-        f'vllm:kv_cache_usage_perc{{model_name="{args.model_name}"}}'
-    )
-    generation_throughput_q = (
-        f'rate(vllm:generation_tokens_total{{model_name="{args.model_name}"}}[1m])'
-    )
+    num_requests_running_q = [
+        f'sum(vllm:num_requests_running{{namespace="{args.namespace}",model_name="{args.model_name}"}})',
+        f'sum(vllm:num_requests_running{{namespace="{args.namespace}"}})',
+        f'sum(vllm:num_requests_running{{model_name="{args.model_name}"}})',
+        "sum(vllm:num_requests_running)",
+    ]
+    num_requests_waiting_q = [
+        f'sum(vllm:num_requests_waiting{{namespace="{args.namespace}",model_name="{args.model_name}"}})',
+        f'sum(vllm:num_requests_waiting{{namespace="{args.namespace}"}})',
+        f'sum(vllm:num_requests_waiting{{model_name="{args.model_name}"}})',
+        "sum(vllm:num_requests_waiting)",
+    ]
+    kv_cache_usage_q = [
+        f'100 * avg(vllm:gpu_cache_usage_perc{{namespace="{args.namespace}",model_name="{args.model_name}"}})',
+        f'100 * avg(vllm:gpu_cache_usage_perc{{namespace="{args.namespace}"}})',
+        f'100 * avg(vllm:gpu_cache_usage_perc{{model_name="{args.model_name}"}})',
+        "100 * avg(vllm:gpu_cache_usage_perc)",
+        f'avg(vllm:kv_cache_usage_perc{{namespace="{args.namespace}",model_name="{args.model_name}"}})',
+        f'avg(vllm:kv_cache_usage_perc{{namespace="{args.namespace}"}})',
+        f'avg(vllm:kv_cache_usage_perc{{model_name="{args.model_name}"}})',
+        "avg(vllm:kv_cache_usage_perc)",
+    ]
+    generation_throughput_q = [
+        f'sum(rate(vllm:generation_tokens_total{{namespace="{args.namespace}",model_name="{args.model_name}"}}[1m]))',
+        f'sum(rate(vllm:generation_tokens_total{{namespace="{args.namespace}"}}[1m]))',
+        f'sum(rate(vllm:generation_tokens_total{{model_name="{args.model_name}"}}[1m]))',
+        "sum(rate(vllm:generation_tokens_total[1m]))",
+    ]
 
     end_time = time.time() + args.duration_seconds
 
@@ -150,10 +174,10 @@ def main() -> None:
             now = time.time()
             row = {
                 "timestamp": now,
-                "num_requests_running": prom_query(args.prom_url, num_requests_running_q),
-                "num_requests_waiting": prom_query(args.prom_url, num_requests_waiting_q),
-                "avg_generation_throughput_toks_per_s": prom_query(args.prom_url, generation_throughput_q),
-                "kv_cache_usage_perc": prom_query(args.prom_url, kv_cache_usage_q),
+                "num_requests_running": prom_query_first(args.prom_url, num_requests_running_q),
+                "num_requests_waiting": prom_query_first(args.prom_url, num_requests_waiting_q),
+                "avg_generation_throughput_toks_per_s": prom_query_first(args.prom_url, generation_throughput_q),
+                "kv_cache_usage_perc": prom_query_first(args.prom_url, kv_cache_usage_q),
                 "ready_replicas": prom_query(args.prom_url, ready_q),
             }
             write_row(writer, row)
