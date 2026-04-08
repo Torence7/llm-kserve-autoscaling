@@ -244,6 +244,40 @@ bash scripts/benchmark/run_policy_eval.sh \
   --scenario short-bursts
 ```
 
+### ShareGPT-style realistic dataset workflow
+
+If you want realistic prompts from ShareGPT-style traces:
+
+1. Prepare benchmark JSONL prompts (`{"prompt":"..."}`) from a ShareGPT JSON/JSONL export:
+
+```bash
+python scripts/benchmark/prepare_sharegpt_dataset.py \
+  --input /path/to/sharegpt.json \
+  --output configs/data/sharegpt_prompts_5k.jsonl \
+  --max-samples 5000 \
+  --min-prompt-tokens 16 \
+  --max-prompt-tokens 256
+```
+
+2. Run policy eval with the provided scenario:
+
+```bash
+PROM_URL="http://localhost:9090" \
+MAX_IN_FLIGHT=4 \
+DRAIN_TIMEOUT_SECONDS=300 \
+BENCH_TIMEOUT_SECONDS=30 \
+bash scripts/benchmark/run_policy_eval.sh \
+  --model qwen25-0.5b-instruct \
+  --policy hpa-cpu-baseline \
+  --scenario conversation-sharegpt
+```
+
+Notebook version of this workflow:
+
+```bash
+jupyter notebook notebooks/benchmark_workflow.ipynb
+```
+
 ### Compare multiple policies on the same scenario
 
 Run the same scenario with different policies to compare behavior under identical load:

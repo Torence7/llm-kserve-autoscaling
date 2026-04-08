@@ -1,9 +1,9 @@
 name: short-bursts
-description: Moderate short-burst scenario
+description: Short-burst scenario sized for policy comparison
 request_type: completions
 arrival_pattern: poisson
-duration_seconds: 30
-mean_rps: 0.2
+duration_seconds: 120
+mean_rps: 1.5
 warmup_seconds: 0
 cooldown_seconds: 0
 

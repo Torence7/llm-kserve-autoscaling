@@ -3,6 +3,7 @@ import argparse
 import asyncio
 import csv
 import json
+import codecs
 import math
 import random
 import string
@@ -237,6 +238,94 @@ def build_prompt_from_scenario(
     raise ValueError(f"Unsupported prompt style: {style}")
 
 
+def _extract_stream_delta_text(request_type: str, data: Dict[str, Any]) -> str:
+    choices = data.get("choices")
+    if not isinstance(choices, list) or not choices:
+        return ""
+    first = choices[0]
+    if not isinstance(first, dict):
+        return ""
+    if request_type == "chat":
+        delta = first.get("delta", {})
+        if isinstance(delta, dict):
+            content = delta.get("content")
+            if isinstance(content, str):
+                return content
+        message = first.get("message", {})
+        if isinstance(message, dict):
+            content = message.get("content")
+            if isinstance(content, str):
+                return content
+        return ""
+    text = first.get("text")
+    return text if isinstance(text, str) else ""
+
+
+async def _read_sse_stream_and_measure(
+    resp: aiohttp.ClientResponse, request_type: str, start: float
+) -> Dict[str, Any]:
+    decoder = codecs.getincrementaldecoder("utf-8")()
+    pending = ""
+    ttft_ms: Optional[float] = None
+    output_chunks: List[str] = []
+
+    async for raw in resp.content.iter_any():
+        if not raw:
+            continue
+
+        decoded = decoder.decode(raw)
+        if not decoded:
+            continue
+
+        pending += decoded
+        while "\n" in pending:
+            line, pending = pending.split("\n", 1)
+            line = line.strip()
+            if not line.startswith("data:"):
+                continue
+
+            payload = line[len("data:") :].strip()
+            if payload == "[DONE]":
+                continue
+
+            try:
+                data = json.loads(payload)
+            except json.JSONDecodeError:
+                continue
+
+            chunk_text = _extract_stream_delta_text(request_type, data)
+            if chunk_text:
+                if ttft_ms is None:
+                    ttft_ms = (time.time() - start) * 1000.0
+                output_chunks.append(chunk_text)
+
+    # Flush decoder tail if any and parse one last pass.
+    tail = decoder.decode(b"", final=True)
+    if tail:
+        pending += tail
+    for line in pending.splitlines():
+        line = line.strip()
+        if not line.startswith("data:"):
+            continue
+        payload = line[len("data:") :].strip()
+        if payload == "[DONE]":
+            continue
+        try:
+            data = json.loads(payload)
+        except json.JSONDecodeError:
+            continue
+        chunk_text = _extract_stream_delta_text(request_type, data)
+        if chunk_text:
+            if ttft_ms is None:
+                ttft_ms = (time.time() - start) * 1000.0
+            output_chunks.append(chunk_text)
+
+    return {
+        "ttft_ms": ttft_ms,
+        "output_chars": len("".join(output_chunks)),
+    }
+
+
 async def send_one_request(
     session: aiohttp.ClientSession,
     endpoint_base: str,
@@ -256,7 +345,7 @@ async def send_one_request(
             "model": model_name,
             "messages": payload_inputs["messages"],
             "max_tokens": max_tokens,
-            "stream": False,
+            "stream": True,
             "temperature": 0.0,
         }
         prompt_chars = sum(len(m["content"]) for m in payload_inputs["messages"])
@@ -265,7 +354,7 @@ async def send_one_request(
             "model": model_name,
             "prompt": payload_inputs["prompt"],
             "max_tokens": max_tokens,
-            "stream": False,
+            "stream": True,
             "temperature": 0.0,
         }
         prompt_chars = len(payload_inputs["prompt"])
@@ -278,21 +367,21 @@ async def send_one_request(
                 json=body,
                 timeout=aiohttp.ClientTimeout(total=timeout_s),
             ) as resp:
-                ttft_ms = (time.time() - start) * 1000.0
-                text = await resp.text()
+                text = ""
+                output_chars = 0
+                ttft_ms: Optional[float] = None
+
+                if resp.status == 200:
+                    stream_result = await _read_sse_stream_and_measure(resp, request_type, start)
+                    ttft_ms = stream_result["ttft_ms"]
+                    output_chars = int(stream_result["output_chars"])
+                else:
+                    text = await resp.text()
+
                 end = time.time()
                 latency_ms = (end - start) * 1000.0
-
-                output_chars = 0
-                if resp.status == 200:
-                    try:
-                        data = json.loads(text)
-                        if request_type == "chat":
-                            output_chars = len(data["choices"][0]["message"]["content"])
-                        else:
-                            output_chars = len(data["choices"][0]["text"])
-                    except Exception:
-                        output_chars = 0
+                if ttft_ms is None:
+                    ttft_ms = latency_ms
 
                 return RequestResult(
                     request_id=req_id,
@@ -301,7 +390,7 @@ async def send_one_request(
                     start_ts=start,
                     end_ts=end,
                     latency_ms=latency_ms,
-                    ttft_ms=ttft_ms,
+                    ttft_ms=float(ttft_ms),
                     prompt_chars=prompt_chars,
                     output_chars=output_chars,
                     max_tokens=max_tokens,
