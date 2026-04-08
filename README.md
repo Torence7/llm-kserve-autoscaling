@@ -272,6 +272,12 @@ bash scripts/benchmark/run_policy_eval.sh \
   --scenario conversation-sharegpt
 ```
 
+Notebook version of this workflow:
+
+```bash
+jupyter notebook notebooks/benchmark_workflow.ipynb
+```
+
 ### Compare multiple policies on the same scenario
 
 Run the same scenario with different policies to compare behavior under identical load:
