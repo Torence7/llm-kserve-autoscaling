@@ -1,0 +1,12 @@
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/short-bursts/hpa-cpu-baseline_20260407_232221
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/short-bursts/hpa-cpu-baseline_20260407_232611
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/short-bursts/hpa-cpu-baseline_20260407_233000
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/short-bursts/keda-token-aware_20260407_234420
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/short-bursts/keda-token-aware_20260407_234810
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/short-bursts/keda-token-aware_20260407_235201
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/short-bursts/keda-token-cache-composite_20260407_235521
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/short-bursts/keda-token-cache-composite_20260407_235911
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/short-bursts/keda-token-cache-composite_20260408_000302
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/short-bursts/keda-waiting-requests_20260407_233320
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/short-bursts/keda-waiting-requests_20260407_233710
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/short-bursts/keda-waiting-requests_20260407_234100
