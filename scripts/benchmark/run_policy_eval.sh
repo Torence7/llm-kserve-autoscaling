@@ -74,6 +74,7 @@ POLICY_SETTLE_SECONDS="${POLICY_SETTLE_SECONDS:-20}"
 BENCH_TIMEOUT_SECONDS="${BENCH_TIMEOUT_SECONDS:-15}"
 DRAIN_TIMEOUT_SECONDS="${DRAIN_TIMEOUT_SECONDS:-5}"
 MAX_IN_FLIGHT="${MAX_IN_FLIGHT:-1}"
+START_REPLICAS="${START_REPLICAS:-${MIN_REPLICAS}}"
 
 TARGET="${TARGET:-http://localhost:${LOCAL_PORT}/v1}"
 DEPLOYMENT_NAME="${DEPLOYMENT_NAME:-${WORKER_DEPLOYMENT_NAME}}"
@@ -128,6 +129,11 @@ esac
 
 log "Waiting ${POLICY_SETTLE_SECONDS}s for policy to settle..."
 sleep "${POLICY_SETTLE_SECONDS}"
+
+log "Resetting deployment replicas to START_REPLICAS=${START_REPLICAS} before traffic..."
+kubectl scale deploy "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --replicas="${START_REPLICAS}"
+kubectl rollout status deploy "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --timeout=180s
+sleep 5
 
 log "Starting Prometheus metric collection..."
 python -u "${REPO_ROOT}/scripts/metrics/collect_metrics.py" \
