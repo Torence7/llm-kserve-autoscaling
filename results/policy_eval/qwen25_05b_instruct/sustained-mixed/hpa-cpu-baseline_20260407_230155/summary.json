@@ -1,0 +1,19 @@
+{
+  "scenario": "sustained-mixed",
+  "request_type": "completions",
+  "target": "http://localhost:8002/v1",
+  "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
+  "duration_seconds": 240,
+  "drain_timeout_seconds": 5.0,
+  "dataset_mode": "synthetic",
+  "dataset_path": null,
+  "dataset_rows": 0,
+  "requests_launched": 300,
+  "requests_total_recorded": 15,
+  "requests_ok": 0,
+  "requests_failed": 15,
+  "latency_p50_ms": null,
+  "latency_p95_ms": null,
+  "ttft_p50_ms": null,
+  "ttft_p95_ms": null
+}

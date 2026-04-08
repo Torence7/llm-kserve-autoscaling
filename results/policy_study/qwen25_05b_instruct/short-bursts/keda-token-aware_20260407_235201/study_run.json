@@ -1,0 +1,8 @@
+{
+  "study_root": "/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/study_20260407_232220",
+  "run_index": 9,
+  "repeat": 3,
+  "policy": "keda-token-aware",
+  "scenario": "short-bursts",
+  "exit_code": 0
+}

@@ -1,0 +1,19 @@
+{
+  "scenario": "conversation",
+  "request_type": "chat",
+  "target": "http://localhost:8002/v1",
+  "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
+  "duration_seconds": 240,
+  "drain_timeout_seconds": 5.0,
+  "dataset_mode": "synthetic",
+  "dataset_path": null,
+  "dataset_rows": 0,
+  "requests_launched": 234,
+  "requests_total_recorded": 15,
+  "requests_ok": 1,
+  "requests_failed": 14,
+  "latency_p50_ms": 15682.090282440186,
+  "latency_p95_ms": 15682.090282440186,
+  "ttft_p50_ms": 15681.999921798706,
+  "ttft_p95_ms": 15681.999921798706
+}
