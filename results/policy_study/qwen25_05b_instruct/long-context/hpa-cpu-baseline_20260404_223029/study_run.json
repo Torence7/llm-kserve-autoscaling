@@ -1,8 +1,0 @@
-{
-  "study_root": "/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/study_20260404_222547",
-  "run_index": 5,
-  "repeat": 2,
-  "policy": "hpa-cpu-baseline",
-  "scenario": "long-context",
-  "exit_code": 1
-}
