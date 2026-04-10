@@ -3,7 +3,7 @@ description: Real-user conversational prompts derived from ShareGPT-style traces
 request_type: completions
 arrival_pattern: poisson
 duration_seconds: 120
-mean_rps: 0.6
+mean_rps: 1.0
 warmup_seconds: 0
 cooldown_seconds: 0
 
@@ -18,7 +18,7 @@ prompt:
   max_tokens: 256
 
 output:
-  max_tokens: 64
+  max_tokens: 96
 
 slo:
   ttft_p95_ms: 5000
