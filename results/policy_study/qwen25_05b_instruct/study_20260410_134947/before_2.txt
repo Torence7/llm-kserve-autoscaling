@@ -1,0 +1,9 @@
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/conversation-sharegpt/hpa-cpu-baseline_20260410_102817
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/conversation-sharegpt/hpa-cpu-baseline_20260410_110115
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/conversation-sharegpt/hpa-cpu-baseline_20260410_110649
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/conversation-sharegpt/hpa-cpu-baseline_20260410_111220
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/conversation-sharegpt/hpa-cpu-baseline_20260410_134948
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/conversation-sharegpt/keda-token-cache-composite_20260410_104826
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/conversation-sharegpt/keda-token-cache-composite_20260410_111721
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/conversation-sharegpt/keda-token-cache-composite_20260410_112252
+/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/conversation-sharegpt/keda-token-cache-composite_20260410_113026

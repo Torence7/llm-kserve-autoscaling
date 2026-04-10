@@ -1,0 +1,16 @@
+request_id,scenario,request_type,start_ts,end_ts,latency_ms,ttft_ms,prompt_chars,output_chars,max_tokens,status_code,ok,error
+zpqk51fpkh,conversation-sharegpt,completions,1775838726.6890082,1775838756.691802,30002.79,30002.79,308,0,96,0,0,[Errno 104] Connection reset by peer
+zycwtiqj7y,conversation-sharegpt,completions,1775838785.3464425,1775838815.3518672,30005.42,30005.42,290,0,96,0,0,[Errno 104] Connection reset by peer
+ye511mkfaz,conversation-sharegpt,completions,1775838845.3575547,1775838875.3632395,30005.68,30005.68,1121,0,96,0,0,[Errno 104] Connection reset by peer
+xpseimvihc,conversation-sharegpt,completions,1775838905.3691351,1775838935.3744965,30005.36,30005.36,536,0,96,0,0,[Errno 104] Connection reset by peer
+14ffyvnvqj,conversation-sharegpt,completions,1775838816.6975405,1775838846.700895,30003.35,30003.35,630,0,96,0,0,[Errno 104] Connection reset by peer
+ex8fsv871y,conversation-sharegpt,completions,1775838876.703432,1775838906.7063475,30002.92,30002.92,1049,0,96,0,0,[Errno 104] Connection reset by peer
+ifd0tvbdiv,conversation-sharegpt,completions,1775838725.3333497,1775838755.3411186,30007.77,30007.77,185,0,96,0,0,[Errno 104] Connection reset by peer
+d4v30t9nt3,conversation-sharegpt,completions,1775838755.3412213,1775838785.3463156,30005.09,30005.09,533,0,96,0,0,[Errno 104] Connection reset by peer
+xff0t0pvn9,conversation-sharegpt,completions,1775838815.351985,1775838845.3574374,30005.45,30005.45,792,0,96,0,0,[Errno 104] Connection reset by peer
+sdw4shnf87,conversation-sharegpt,completions,1775838846.701039,1775838876.7033055,30002.27,30002.27,799,0,96,0,0,[Errno 104] Connection reset by peer
+a753lc58dr,conversation-sharegpt,completions,1775838875.3633614,1775838905.3690057,30005.64,30005.64,982,0,96,0,0,[Errno 104] Connection reset by peer
+blskrt05ui,conversation-sharegpt,completions,1775838906.7064762,1775838936.7099845,30003.51,30003.51,573,0,96,0,0,[Errno 104] Connection reset by peer
+dxmo5bxxc0,conversation-sharegpt,completions,1775838935.3746731,1775838965.3801801,30005.51,30005.51,799,0,96,0,0,[Errno 104] Connection reset by peer
+1c32oc6uzh,conversation-sharegpt,completions,1775838786.6951382,1775838816.69742,30002.28,30002.28,1416,0,96,0,0,[Errno 104] Connection reset by peer
+cx1945nq4f,conversation-sharegpt,completions,1775838756.691934,1775838786.69497,30003.04,30003.04,685,0,96,0,0,[Errno 104] Connection reset by peer

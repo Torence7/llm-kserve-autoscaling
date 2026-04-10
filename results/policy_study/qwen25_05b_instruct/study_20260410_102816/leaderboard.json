@@ -1,0 +1,28 @@
+[
+  {
+    "model_key": "qwen25_05b_instruct",
+    "scenario": "conversation-sharegpt",
+    "policy_key": "hpa-cpu-baseline",
+    "runs": 1,
+    "requests_total_recorded": 16.0,
+    "requests_ok": 16.0,
+    "requests_failed": 0.0,
+    "error_rate": 0.0,
+    "latency_p50_ms": 29010.17451286316,
+    "latency_p95_ms": 37557.22188949585,
+    "ttft_p50_ms": 7069.143652915955,
+    "ttft_p95_ms": 11427.580714225769,
+    "avg_waiting_requests": null,
+    "max_waiting_requests": null,
+    "avg_running_requests": null,
+    "max_running_requests": null,
+    "avg_generation_toks_per_s": null,
+    "max_generation_toks_per_s": null,
+    "avg_kv_cache_usage_perc": null,
+    "max_kv_cache_usage_perc": null,
+    "avg_ready_replicas": 1.0,
+    "min_ready_replicas": 1.0,
+    "max_ready_replicas": 1.0,
+    "replica_change_events": 0.0
+  }
+]
