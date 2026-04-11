@@ -1,0 +1,33 @@
+name: scaling-step
+description: Moderate step increase in load to show earlier and more efficient scale-out.
+request_type: completions
+duration_seconds: 210
+
+dataset:
+  mode: jsonl
+  path: ../data/sharegpt_prompts_5k.jsonl
+
+prompt:
+  style: dataset_prompt
+  min_tokens: 64
+  max_tokens: 256
+
+output:
+  max_tokens_min: 64
+  max_tokens_max: 128
+
+phases:
+  - name: warmup
+    duration_seconds: 30
+    arrival_pattern: constant
+    rps: 0.25
+
+  - name: scale_up
+    duration_seconds: 120
+    arrival_pattern: constant
+    rps: 1.0
+
+  - name: recovery
+    duration_seconds: 60
+    arrival_pattern: constant
+    rps: 0.25

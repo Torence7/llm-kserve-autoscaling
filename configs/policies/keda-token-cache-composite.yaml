@@ -4,16 +4,16 @@ policy_type: keda-composite
 min_replicas: 1
 max_replicas: 5
 polling_interval: 5
-cooldown_period: 30
+cooldown_period: 45
 
 prometheus:
   server_address: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
 
 advanced:
   scaling_modifiers:
-    formula: "(token_workload * 0.7) + (waiting * 15) + (kv_cache_pct * 0.3)"
-    target: "10"
-    activation_target: "2"
+    formula: "(token_workload * 0.9) + (kv_cache_pct * 8)"
+    target: "6"
+    activation_target: "1"
 
 triggers:
   - name: token_workload
@@ -31,8 +31,8 @@ triggers:
           rate(vllm:generation_tokens_total{model_name="Qwen/Qwen2.5-0.5B-Instruct"}[1m])
         )
       )
-    threshold: "10"
-    activation_threshold: "2"
+    threshold: "6"
+    activation_threshold: "1"
 
   - name: waiting
     metric_name: vllm_waiting_requests
@@ -49,5 +49,5 @@ triggers:
       avg(
         vllm:kv_cache_usage_perc{model_name="Qwen/Qwen2.5-0.5B-Instruct"}
       )
-    threshold: "0.05"
+    threshold: "0.03"
     activation_threshold: "0.01"

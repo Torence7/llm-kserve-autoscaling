@@ -10,7 +10,7 @@ import string
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
 import yaml
@@ -20,6 +20,7 @@ import yaml
 class RequestResult:
     request_id: str
     scenario: str
+    phase_name: str
     request_type: str
     start_ts: float
     end_ts: float
@@ -31,6 +32,15 @@ class RequestResult:
     status_code: int
     ok: bool
     error: str = ""
+
+
+@dataclass
+class PhaseConfig:
+    name: str
+    duration_seconds: int
+    arrival_pattern: str
+    mean_rps: Optional[float] = None
+    rps: Optional[float] = None
 
 
 def load_yaml(path: str) -> Dict[str, Any]:
@@ -85,14 +95,10 @@ def choose_max_tokens(cfg: Dict[str, Any]) -> int:
 
 
 def poisson_wait(mean_rps: float) -> float:
-    if mean_rps <= 0:
-        return 1.0
     return random.expovariate(mean_rps)
 
 
 def constant_wait(rps: float) -> float:
-    if rps <= 0:
-        return 1.0
     return 1.0 / rps
 
 
@@ -125,8 +131,12 @@ def normalize_dataset_path(cfg: Dict[str, Any], scenario_path: str) -> Optional[
     if p.is_absolute():
         return p
 
-    candidate = (Path.cwd() / raw_path).resolve()
-    return candidate
+    scenario_dir = Path(scenario_path).resolve().parent
+    candidate = (scenario_dir / raw_path).resolve()
+    if candidate.exists():
+        return candidate
+
+    return (Path.cwd() / raw_path).resolve()
 
 
 def dataset_prompt_from_row(row: Dict[str, Any], min_tokens: int, max_tokens: int) -> str:
@@ -238,6 +248,82 @@ def build_prompt_from_scenario(
     raise ValueError(f"Unsupported prompt style: {style}")
 
 
+def build_phases(cfg: Dict[str, Any]) -> List[PhaseConfig]:
+    raw_phases = cfg.get("phases")
+    phases: List[PhaseConfig] = []
+
+    if raw_phases:
+        if not isinstance(raw_phases, list) or not raw_phases:
+            raise ValueError("scenario.phases must be a non-empty list")
+
+        for i, phase in enumerate(raw_phases, start=1):
+            if not isinstance(phase, dict):
+                raise ValueError(f"Phase {i} must be a mapping")
+
+            name = str(phase.get("name", f"phase_{i}"))
+            duration_seconds = int(phase["duration_seconds"])
+            arrival_pattern = str(phase.get("arrival_pattern", cfg.get("arrival_pattern", "")))
+
+            if arrival_pattern not in {"poisson", "constant"}:
+                raise ValueError(f"Unsupported arrival pattern in phase {name}: {arrival_pattern}")
+
+            mean_rps = None
+            rps = None
+            if arrival_pattern == "poisson":
+                raw_mean_rps = phase.get("mean_rps", cfg.get("mean_rps"))
+                if raw_mean_rps is None:
+                    raise ValueError(f"Phase {name} uses poisson but mean_rps is missing")
+                mean_rps = float(raw_mean_rps)
+            else:
+                raw_rps = phase.get("rps", cfg.get("rps"))
+                if raw_rps is None:
+                    raise ValueError(f"Phase {name} uses constant but rps is missing")
+                rps = float(raw_rps)
+
+            phases.append(
+                PhaseConfig(
+                    name=name,
+                    duration_seconds=duration_seconds,
+                    arrival_pattern=arrival_pattern,
+                    mean_rps=mean_rps,
+                    rps=rps,
+                )
+            )
+        return phases
+
+    duration_seconds = int(cfg["duration_seconds"])
+    arrival_pattern = str(cfg["arrival_pattern"])
+
+    if arrival_pattern == "poisson":
+        mean_rps = cfg.get("mean_rps")
+        if mean_rps is None:
+            raise ValueError("arrival_pattern=poisson but mean_rps is missing")
+        phases.append(
+            PhaseConfig(
+                name="default",
+                duration_seconds=duration_seconds,
+                arrival_pattern=arrival_pattern,
+                mean_rps=float(mean_rps),
+            )
+        )
+    elif arrival_pattern == "constant":
+        rps = cfg.get("rps")
+        if rps is None:
+            raise ValueError("arrival_pattern=constant but rps is missing")
+        phases.append(
+            PhaseConfig(
+                name="default",
+                duration_seconds=duration_seconds,
+                arrival_pattern=arrival_pattern,
+                rps=float(rps),
+            )
+        )
+    else:
+        raise ValueError(f"Unsupported arrival pattern: {arrival_pattern}")
+
+    return phases
+
+
 def _extract_stream_delta_text(request_type: str, data: Dict[str, Any]) -> str:
     choices = data.get("choices")
     if not isinstance(choices, list) or not choices:
@@ -299,10 +385,10 @@ async def _read_sse_stream_and_measure(
                     ttft_ms = (time.time() - start) * 1000.0
                 output_chunks.append(chunk_text)
 
-    # Flush decoder tail if any and parse one last pass.
     tail = decoder.decode(b"", final=True)
     if tail:
         pending += tail
+
     for line in pending.splitlines():
         line = line.strip()
         if not line.startswith("data:"):
@@ -331,6 +417,7 @@ async def send_one_request(
     endpoint_base: str,
     model_name: str,
     scenario_name: str,
+    phase_name: str,
     request_type: str,
     timeout_s: float,
     semaphore: asyncio.Semaphore,
@@ -386,6 +473,7 @@ async def send_one_request(
                 return RequestResult(
                     request_id=req_id,
                     scenario=scenario_name,
+                    phase_name=phase_name,
                     request_type=request_type,
                     start_ts=start,
                     end_ts=end,
@@ -403,6 +491,7 @@ async def send_one_request(
             return RequestResult(
                 request_id=req_id,
                 scenario=scenario_name,
+                phase_name=phase_name,
                 request_type=request_type,
                 start_ts=start,
                 end_ts=end,
@@ -417,18 +506,19 @@ async def send_one_request(
             )
 
 
-async def drain_with_timeout(tasks: List[asyncio.Task], drain_timeout_s: float) -> List[RequestResult]:
+async def drain_with_timeout(tasks: List[asyncio.Task], drain_timeout_s: float) -> Tuple[List[RequestResult], int, int]:
     if not tasks:
-        return []
+        return [], 0, 0
 
     done, pending = await asyncio.wait(tasks, timeout=drain_timeout_s)
     results: List[RequestResult] = []
+    task_exception_count = 0
 
     for task in done:
         try:
             results.append(task.result())
         except Exception:
-            pass
+            task_exception_count += 1
 
     for task in pending:
         task.cancel()
@@ -436,7 +526,7 @@ async def drain_with_timeout(tasks: List[asyncio.Task], drain_timeout_s: float) 
     if pending:
         await asyncio.gather(*pending, return_exceptions=True)
 
-    return results
+    return results, len(pending), task_exception_count
 
 
 async def benchmark_main(args: argparse.Namespace) -> None:
@@ -444,16 +534,11 @@ async def benchmark_main(args: argparse.Namespace) -> None:
     outdir = Path(args.outdir)
     ensure_dir(outdir)
 
-    duration = int(scenario_cfg["duration_seconds"])
-    arrival_pattern = scenario_cfg["arrival_pattern"]
     request_type = scenario_cfg["request_type"]
     scenario_name = scenario_cfg["name"]
     timeout_s = float(args.timeout_seconds)
     max_in_flight = int(args.max_in_flight)
     drain_timeout_s = float(args.drain_timeout_seconds)
-
-    mean_rps = scenario_cfg.get("mean_rps")
-    rps = scenario_cfg.get("rps")
 
     dataset_rows: Optional[List[Dict[str, Any]]] = None
     dataset_cfg = scenario_cfg.get("dataset", {})
@@ -465,13 +550,15 @@ async def benchmark_main(args: argparse.Namespace) -> None:
     elif dataset_mode != "synthetic":
         raise ValueError(f"Unsupported dataset.mode: {dataset_mode}")
 
+    phases = build_phases(scenario_cfg)
+    total_duration_seconds = sum(phase.duration_seconds for phase in phases)
+
     print(
         json.dumps(
             {
                 "scenario": scenario_name,
                 "request_type": request_type,
-                "duration_seconds": duration,
-                "arrival_pattern": arrival_pattern,
+                "duration_seconds": total_duration_seconds,
                 "target": args.target,
                 "model_name": args.model_name,
                 "max_in_flight": max_in_flight,
@@ -480,6 +567,16 @@ async def benchmark_main(args: argparse.Namespace) -> None:
                 "dataset_mode": dataset_mode,
                 "dataset_rows": len(dataset_rows) if dataset_rows else 0,
                 "dataset_path": dataset_cfg.get("path"),
+                "phases": [
+                    {
+                        "name": p.name,
+                        "duration_seconds": p.duration_seconds,
+                        "arrival_pattern": p.arrival_pattern,
+                        "mean_rps": p.mean_rps,
+                        "rps": p.rps,
+                    }
+                    for p in phases
+                ],
             },
             indent=2,
         ),
@@ -488,78 +585,166 @@ async def benchmark_main(args: argparse.Namespace) -> None:
 
     semaphore = asyncio.Semaphore(max_in_flight)
     tasks: List[asyncio.Task] = []
-    t_end = time.time() + duration
     launched = 0
+    launched_by_phase: Dict[str, int] = {p.name: 0 for p in phases}
 
     async with aiohttp.ClientSession() as session:
-        while time.time() < t_end:
-            payload_inputs = build_prompt_from_scenario(scenario_cfg, dataset_rows=dataset_rows)
-            max_tokens = choose_max_tokens(scenario_cfg)
-
-            task = asyncio.create_task(
-                send_one_request(
-                    session=session,
-                    endpoint_base=args.target,
-                    model_name=args.model_name,
-                    scenario_name=scenario_name,
-                    request_type=request_type,
-                    timeout_s=timeout_s,
-                    semaphore=semaphore,
-                    payload_inputs=payload_inputs,
-                    max_tokens=max_tokens,
-                )
+        for phase in phases:
+            print(
+                f"Starting phase '{phase.name}' for {phase.duration_seconds}s "
+                f"({phase.arrival_pattern}, "
+                f"{'mean_rps=' + str(phase.mean_rps) if phase.arrival_pattern == 'poisson' else 'rps=' + str(phase.rps)})",
+                flush=True,
             )
-            tasks.append(task)
-            launched += 1
+            phase_end = time.time() + phase.duration_seconds
 
-            if launched % 5 == 0:
-                print(f"Launched {launched} requests so far...", flush=True)
+            while time.time() < phase_end:
+                rate = phase.mean_rps if phase.arrival_pattern == "poisson" else phase.rps
+                if rate is None:
+                    raise ValueError(f"Phase {phase.name} has no rate configured")
 
-            if arrival_pattern == "poisson":
-                await asyncio.sleep(poisson_wait(float(mean_rps)))
-            elif arrival_pattern == "constant":
-                await asyncio.sleep(constant_wait(float(rps)))
-            else:
-                raise ValueError(f"Unsupported arrival pattern: {arrival_pattern}")
+                if rate <= 0:
+                    sleep_for = max(0.0, min(1.0, phase_end - time.time()))
+                    if sleep_for > 0:
+                        await asyncio.sleep(sleep_for)
+                    continue
+
+                payload_inputs = build_prompt_from_scenario(scenario_cfg, dataset_rows=dataset_rows)
+                max_tokens = choose_max_tokens(scenario_cfg)
+
+                task = asyncio.create_task(
+                    send_one_request(
+                        session=session,
+                        endpoint_base=args.target,
+                        model_name=args.model_name,
+                        scenario_name=scenario_name,
+                        phase_name=phase.name,
+                        request_type=request_type,
+                        timeout_s=timeout_s,
+                        semaphore=semaphore,
+                        payload_inputs=payload_inputs,
+                        max_tokens=max_tokens,
+                    )
+                )
+                tasks.append(task)
+                launched += 1
+                launched_by_phase[phase.name] += 1
+
+                if launched % 5 == 0:
+                    print(f"Launched {launched} requests so far...", flush=True)
+
+                wait_s = poisson_wait(rate) if phase.arrival_pattern == "poisson" else constant_wait(rate)
+                remaining = phase_end - time.time()
+                if remaining <= 0:
+                    break
+                await asyncio.sleep(min(wait_s, remaining))
 
         print(f"Launch phase done. Waiting up to {drain_timeout_s}s for {len(tasks)} tasks...", flush=True)
-        results = await drain_with_timeout(tasks, drain_timeout_s)
+        results, pending_count, task_exception_count = await drain_with_timeout(tasks, drain_timeout_s)
 
     requests_csv = outdir / "requests.csv"
     print(f"Writing request results to {requests_csv}", flush=True)
     with open(requests_csv, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow([
-            "request_id", "scenario", "request_type", "start_ts", "end_ts",
-            "latency_ms", "ttft_ms", "prompt_chars", "output_chars",
-            "max_tokens", "status_code", "ok", "error"
+            "request_id",
+            "scenario",
+            "phase_name",
+            "request_type",
+            "start_ts",
+            "end_ts",
+            "latency_ms",
+            "ttft_ms",
+            "prompt_chars",
+            "output_chars",
+            "max_tokens",
+            "status_code",
+            "ok",
+            "error",
         ])
         for r in results:
             writer.writerow([
-                r.request_id, r.scenario, r.request_type, r.start_ts, r.end_ts,
-                f"{r.latency_ms:.2f}", f"{r.ttft_ms:.2f}", r.prompt_chars, r.output_chars,
-                r.max_tokens, r.status_code, int(r.ok), r.error
+                r.request_id,
+                r.scenario,
+                r.phase_name,
+                r.request_type,
+                r.start_ts,
+                r.end_ts,
+                f"{r.latency_ms:.2f}",
+                f"{r.ttft_ms:.2f}",
+                r.prompt_chars,
+                r.output_chars,
+                r.max_tokens,
+                r.status_code,
+                int(r.ok),
+                r.error,
             ])
 
     ok_results = [r for r in results if r.ok]
+    recorded_failures = len(results) - len(ok_results)
+    unfinished_requests = max(0, launched - len(results))
+
+    per_phase_summary: Dict[str, Dict[str, Any]] = {
+        phase.name: {
+            "launched": launched_by_phase.get(phase.name, 0),
+            "recorded": 0,
+            "ok": 0,
+            "failed": 0,
+        }
+        for phase in phases
+    }
+
+    for r in results:
+        phase_stats = per_phase_summary.setdefault(
+            r.phase_name, {"launched": 0, "recorded": 0, "ok": 0, "failed": 0}
+        )
+        phase_stats["recorded"] += 1
+        if r.ok:
+            phase_stats["ok"] += 1
+        else:
+            phase_stats["failed"] += 1
+
+    for phase_name, stats in per_phase_summary.items():
+        launched_phase = int(stats["launched"])
+        recorded_phase = int(stats["recorded"])
+        ok_phase = int(stats["ok"])
+        stats["unfinished"] = max(0, launched_phase - recorded_phase)
+        stats["completion_rate"] = (ok_phase / launched_phase) if launched_phase > 0 else None
+        stats["recorded_success_rate"] = (ok_phase / recorded_phase) if recorded_phase > 0 else None
+
     summary = {
         "scenario": scenario_name,
         "request_type": request_type,
         "target": args.target,
         "model_name": args.model_name,
-        "duration_seconds": duration,
+        "duration_seconds": total_duration_seconds,
         "drain_timeout_seconds": drain_timeout_s,
         "dataset_mode": dataset_mode,
         "dataset_path": dataset_cfg.get("path"),
         "dataset_rows": len(dataset_rows) if dataset_rows else 0,
+        "phases": [
+            {
+                "name": p.name,
+                "duration_seconds": p.duration_seconds,
+                "arrival_pattern": p.arrival_pattern,
+                "mean_rps": p.mean_rps,
+                "rps": p.rps,
+            }
+            for p in phases
+        ],
         "requests_launched": launched,
         "requests_total_recorded": len(results),
         "requests_ok": len(ok_results),
-        "requests_failed": len(results) - len(ok_results),
+        "requests_failed": recorded_failures,
+        "requests_unfinished": unfinished_requests,
+        "task_exception_count": task_exception_count,
+        "completion_rate": (len(ok_results) / launched) if launched > 0 else None,
+        "recorded_success_rate": (len(ok_results) / len(results)) if results else None,
         "latency_p50_ms": percentile([r.latency_ms for r in ok_results], 50),
         "latency_p95_ms": percentile([r.latency_ms for r in ok_results], 95),
         "ttft_p50_ms": percentile([r.ttft_ms for r in ok_results], 50),
         "ttft_p95_ms": percentile([r.ttft_ms for r in ok_results], 95),
+        "per_phase": per_phase_summary,
     }
 
     summary_path = outdir / "summary.json"

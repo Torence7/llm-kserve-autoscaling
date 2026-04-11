@@ -89,9 +89,29 @@ mkdir -p "${run_dir}"
 
 duration_seconds="$(python - <<PY
 import yaml
+
 with open("${SCENARIO_PATH}", "r", encoding="utf-8") as f:
     cfg = yaml.safe_load(f)
-print(int(cfg["duration_seconds"]))
+
+if not isinstance(cfg, dict):
+    raise SystemExit("Scenario YAML must parse to a mapping/object")
+
+if "duration_seconds" in cfg and cfg["duration_seconds"] is not None:
+    print(int(cfg["duration_seconds"]))
+elif "phases" in cfg and cfg["phases"] is not None:
+    phases = cfg["phases"]
+    if not isinstance(phases, list) or not phases:
+        raise SystemExit("Scenario phases must be a non-empty list")
+    total = 0
+    for i, phase in enumerate(phases, start=1):
+        if not isinstance(phase, dict):
+            raise SystemExit(f"Phase {i} must be a mapping/object")
+        if "duration_seconds" not in phase:
+            raise SystemExit(f"Phase {i} missing duration_seconds")
+        total += int(phase["duration_seconds"])
+    print(total)
+else:
+    raise SystemExit("Scenario must define either top-level duration_seconds or phases[].duration_seconds")
 PY
 )"
 metric_duration_seconds=$(( duration_seconds + DRAIN_TIMEOUT_SECONDS + 5 ))
@@ -103,13 +123,13 @@ log "Policy key: ${POLICY_KEY}"
 log "Policy type: ${POLICY_TYPE}"
 log "Scenario: ${SCENARIO_NAME}"
 log "Scenario path: ${SCENARIO_PATH}"
+log "Scenario duration (derived): ${duration_seconds}s"
 log "Deployment name: ${DEPLOYMENT_NAME}"
 log "Served model name: ${SERVED_MODEL_NAME}"
 log "Namespace: ${NAMESPACE}"
 log "Target endpoint: ${TARGET}"
 log "Results dir: ${run_dir}"
 
-# Reset deployment BEFORE creating the autoscaler so KEDA/HPA sees a clean starting state.
 log "Resetting deployment replicas to START_REPLICAS=${START_REPLICAS} before applying policy..."
 kubectl scale deploy "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --replicas="${START_REPLICAS}"
 kubectl rollout status deploy "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --timeout=180s
@@ -170,6 +190,7 @@ cat > "${run_dir}/metadata.json" <<EOF
   "deployment_name": "${DEPLOYMENT_NAME}",
   "scenario": "${SCENARIO_NAME}",
   "scenario_path": "${SCENARIO_PATH}",
+  "scenario_duration_seconds": ${duration_seconds},
   "policy_file": "${POLICY_FILE}",
   "policy_key": "${POLICY_KEY}",
   "policy_type": "${POLICY_TYPE}",
