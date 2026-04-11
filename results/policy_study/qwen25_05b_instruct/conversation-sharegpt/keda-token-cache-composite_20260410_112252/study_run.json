@@ -1,8 +1,0 @@
-{
-  "study_root": "/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/study_20260410_110114",
-  "run_index": 5,
-  "repeat": 2,
-  "policy": "keda-token-cache-composite",
-  "scenario": "conversation-sharegpt",
-  "exit_code": 0
-}

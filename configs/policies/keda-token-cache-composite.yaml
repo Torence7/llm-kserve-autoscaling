@@ -12,8 +12,8 @@ prometheus:
 advanced:
   scaling_modifiers:
     formula: "(token_workload * 0.7) + (waiting * 15) + (kv_cache_pct * 0.3)"
-    target: "35"
-    activation_target: "10"
+    target: "10"
+    activation_target: "2"
 
 triggers:
   - name: token_workload
@@ -21,24 +21,24 @@ triggers:
     query: |
       (
         sum(
-          rate(vllm:prompt_tokens_total{namespace="llm-demo"}[1m])
+          rate(vllm:prompt_tokens_total{model_name="Qwen/Qwen2.5-0.5B-Instruct"}[1m])
         )
       )
       +
       0.5 *
       (
         sum(
-          rate(vllm:generation_tokens_total{namespace="llm-demo"}[1m])
+          rate(vllm:generation_tokens_total{model_name="Qwen/Qwen2.5-0.5B-Instruct"}[1m])
         )
       )
-    threshold: "60"
-    activation_threshold: "20"
+    threshold: "10"
+    activation_threshold: "2"
 
   - name: waiting
     metric_name: vllm_waiting_requests
     query: |
       sum(
-        vllm:num_requests_waiting{namespace="llm-demo"}
+        vllm:num_requests_waiting{model_name="Qwen/Qwen2.5-0.5B-Instruct"}
       )
     threshold: "1"
     activation_threshold: "1"
@@ -47,7 +47,7 @@ triggers:
     metric_name: vllm_kv_cache_usage_percent
     query: |
       avg(
-        vllm:kv_cache_usage_perc{namespace="llm-demo"}
+        vllm:kv_cache_usage_perc{model_name="Qwen/Qwen2.5-0.5B-Instruct"}
       )
-    threshold: "0.30"
-    activation_threshold: "0.15"
+    threshold: "0.05"
+    activation_threshold: "0.01"

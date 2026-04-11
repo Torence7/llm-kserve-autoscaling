@@ -26,6 +26,7 @@ Optional environment variables:
   BENCH_TIMEOUT_SECONDS=15
   DRAIN_TIMEOUT_SECONDS=5
   MAX_IN_FLIGHT=1
+  START_REPLICAS=1
 EOF
 }
 
@@ -108,6 +109,12 @@ log "Namespace: ${NAMESPACE}"
 log "Target endpoint: ${TARGET}"
 log "Results dir: ${run_dir}"
 
+# Reset deployment BEFORE creating the autoscaler so KEDA/HPA sees a clean starting state.
+log "Resetting deployment replicas to START_REPLICAS=${START_REPLICAS} before applying policy..."
+kubectl scale deploy "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --replicas="${START_REPLICAS}"
+kubectl rollout status deploy "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --timeout=180s
+sleep 5
+
 log "Applying policy ${POLICY_KEY} ..."
 case "${POLICY_TYPE}" in
   hpa|hpa-cpu)
@@ -129,11 +136,6 @@ esac
 
 log "Waiting ${POLICY_SETTLE_SECONDS}s for policy to settle..."
 sleep "${POLICY_SETTLE_SECONDS}"
-
-log "Resetting deployment replicas to START_REPLICAS=${START_REPLICAS} before traffic..."
-kubectl scale deploy "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --replicas="${START_REPLICAS}"
-kubectl rollout status deploy "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --timeout=180s
-sleep 5
 
 log "Starting Prometheus metric collection..."
 python -u "${REPO_ROOT}/scripts/metrics/collect_metrics.py" \
@@ -177,7 +179,8 @@ cat > "${run_dir}/metadata.json" <<EOF
   "policy_settle_seconds": ${POLICY_SETTLE_SECONDS},
   "benchmark_timeout_seconds": ${BENCH_TIMEOUT_SECONDS},
   "drain_timeout_seconds": ${DRAIN_TIMEOUT_SECONDS},
-  "max_in_flight": ${MAX_IN_FLIGHT}
+  "max_in_flight": ${MAX_IN_FLIGHT},
+  "start_replicas": ${START_REPLICAS}
 }
 EOF
 
