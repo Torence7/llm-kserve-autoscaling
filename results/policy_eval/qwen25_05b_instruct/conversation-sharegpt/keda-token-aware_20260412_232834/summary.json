@@ -1,0 +1,43 @@
+{
+  "scenario": "conversation-sharegpt",
+  "request_type": "completions",
+  "target": "http://localhost:8002/v1",
+  "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
+  "duration_seconds": 120,
+  "drain_timeout_seconds": 180.0,
+  "dataset_mode": "jsonl",
+  "dataset_path": "configs/data/sharegpt_prompts_5k.jsonl",
+  "dataset_rows": 5000,
+  "phases": [
+    {
+      "name": "default",
+      "duration_seconds": 120,
+      "arrival_pattern": "poisson",
+      "mean_rps": 1.0,
+      "rps": null
+    }
+  ],
+  "requests_launched": 90,
+  "requests_total_recorded": 28,
+  "requests_ok": 28,
+  "requests_failed": 0,
+  "requests_unfinished": 62,
+  "task_exception_count": 0,
+  "completion_rate": 0.3111111111111111,
+  "recorded_success_rate": 1.0,
+  "latency_p50_ms": 38698.5182762146,
+  "latency_p95_ms": 47388.81616592407,
+  "ttft_p50_ms": 4197.48318195343,
+  "ttft_p95_ms": 9227.335393428802,
+  "per_phase": {
+    "default": {
+      "launched": 90,
+      "recorded": 28,
+      "ok": 28,
+      "failed": 0,
+      "unfinished": 62,
+      "completion_rate": 0.3111111111111111,
+      "recorded_success_rate": 1.0
+    }
+  }
+}
