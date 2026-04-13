@@ -179,6 +179,143 @@ kubectl get secret prometheus-grafana -n monitoring \
 
 The dashboard defaults to the last 5 minutes and auto-refreshes every 10 seconds. Use the `Namespace` dropdown to select `llm-demo`.
 
+## ML-based autoscaling
+
+Instead of hand-tuned thresholds (HPA/KEDA), this policy trains a lightweight Gradient Boosted Tree to predict the optimal replica count from live Prometheus metrics. The trained model runs inside a small controller Pod that polls metrics and calls `kubectl scale`.
+
+### Architecture
+
+```
+Prometheus ──▶ controller.py ──▶ feature engineering ──▶ GBT model ──▶ kubectl scale
+   (5 vLLM       (Pod in         (13 derived            (~50 KB       (target
+    metrics)      cluster)         features)              joblib)       deployment)
+```
+
+**Features used** (13 total):
+- `requests_running`, `requests_waiting`, `generation_throughput`, `kv_cache_pct`, `current_replicas`
+- Deltas (rate of change) for each of the above four metrics
+- Per-replica ratios: `waiting/replicas`, `running/replicas`, `throughput/replicas`
+- Composite `load_intensity = running + 2*waiting`
+
+**Model**: scikit-learn `GradientBoostingClassifier` (~50 KB serialised). Inference takes <1ms per tick.
+
+### Step 1: Gather training data
+
+Training data comes from your existing policy-evaluation runs. Run several policies across several scenarios to generate diverse data:
+
+```bash
+source .venv/bin/activate
+
+# Run each existing policy under each scenario
+for policy in hpa-cpu-baseline keda-waiting-requests keda-token-cache-composite; do
+  for scenario in short-bursts sustained-mixed scaling-step; do
+    PROM_URL="http://localhost:9090" \
+    bash scripts/benchmark/run_policy_eval.sh \
+      --model qwen25-0.5b-instruct \
+      --policy "$policy" \
+      --scenario "$scenario"
+  done
+done
+```
+
+This produces `results/policy_eval/<model>/<scenario>/<policy>_<timestamp>/system_metrics.csv` for each run.
+
+### Step 2: Build the training CSV
+
+Consolidate all runs into a single feature-engineered training dataset:
+
+```bash
+python scripts/ml_autoscaler/collect_training_data.py \
+  --results-root results/policy_eval \
+  --model-key qwen25_05b_instruct \
+  --output data/ml_training.csv \
+  --min-replicas 1 \
+  --max-replicas 5
+```
+
+This reads every `system_metrics.csv`, computes the 13 features plus an oracle "optimal replicas" label for each time step, and writes `data/ml_training.csv`.
+
+### Step 3: Train the model
+
+```bash
+pip install scikit-learn joblib numpy
+
+python scripts/ml_autoscaler/train_model.py \
+  --training-csv data/ml_training.csv \
+  --output models/ml_autoscaler.joblib \
+  --n-estimators 120 \
+  --max-depth 4 \
+  --learning-rate 0.1
+```
+
+This prints test accuracy, a classification report, and feature importances. The serialised model goes to `models/ml_autoscaler.joblib` (~50 KB).
+
+### Step 4: Deploy the controller
+
+```bash
+bash scripts/deploy_ml_autoscaler.sh \
+  --model qwen25-0.5b-instruct \
+  --policy ml-autoscaler
+```
+
+This:
+- Removes any competing HPA/KEDA resources
+- Creates ConfigMaps for the code and trained model
+- Deploys a lightweight Pod with RBAC to scale the target deployment
+- The Pod polls Prometheus every 10s, runs GBT inference, and scales accordingly
+
+View controller logs:
+```bash
+kubectl logs -n llm-demo ml-autoscaler-qwen25-05b-instruct -f
+```
+
+### Step 5: Benchmark the ML policy
+
+Run the standard policy evaluation to compare against baselines:
+
+```bash
+PROM_URL="http://localhost:9090" \
+bash scripts/benchmark/run_policy_eval.sh \
+  --model qwen25-0.5b-instruct \
+  --policy ml-autoscaler \
+  --scenario short-bursts
+```
+
+### Step 6: Compare all policies
+
+```bash
+# Run the same scenario with each policy
+for policy in hpa-cpu-baseline keda-waiting-requests ml-autoscaler; do
+  PROM_URL="http://localhost:9090" \
+  bash scripts/benchmark/run_policy_eval.sh \
+    --model qwen25-0.5b-instruct \
+    --policy "$policy" \
+    --scenario short-bursts
+done
+
+# Generate the leaderboard
+python scripts/benchmark/summarize_policy_study.py \
+  --results-root results/policy_eval \
+  --model-key qwen25_05b_instruct \
+  --study-root results/study
+```
+
+### Testing locally (dry-run, without deploying to K8s)
+
+With Prometheus port-forwarded, you can test the controller locally:
+
+```bash
+python scripts/ml_autoscaler/controller.py \
+  --model-path models/ml_autoscaler.joblib \
+  --prom-url http://localhost:9090 \
+  --deployment-name qwen25-0-5b-instruct-kserve \
+  --namespace llm-demo \
+  --served-model-name "Qwen/Qwen2.5-0.5B-Instruct" \
+  --min-replicas 1 --max-replicas 5 \
+  --interval 10 \
+  --dry-run
+```
+
 ## Adding another model
 
 To support a new model:

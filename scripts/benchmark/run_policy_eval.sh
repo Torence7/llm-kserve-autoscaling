@@ -149,6 +149,12 @@ case "${POLICY_TYPE}" in
       --policy "${POLICY_FILE}"
     kubectl get scaledobject -n "${NAMESPACE}" || true
     ;;
+  ml)
+    bash "${REPO_ROOT}/scripts/deploy_ml_autoscaler.sh" \
+      --model "${MODEL_FILE}" \
+      --policy "${POLICY_FILE}"
+    kubectl get pod -n "${NAMESPACE}" -l app=ml-autoscaler || true
+    ;;
   *)
     die "Unsupported policy_type for policy eval: ${POLICY_TYPE}"
     ;;
