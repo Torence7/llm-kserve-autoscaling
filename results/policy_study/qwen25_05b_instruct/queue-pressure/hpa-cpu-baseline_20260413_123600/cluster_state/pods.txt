@@ -1,0 +1,7 @@
+NAME                                                            READY   STATUS    RESTARTS   AGE     IP             NODE                   NOMINATED NODE   READINESS GATES
+qwen25-0-5b-instruct-kserve-665bf8f748-9fbpq                    1/1     Running   0          3d2h    10.244.0.18    kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-n6qw2                    0/1     Running   0          4m7s    10.244.0.237   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-pddhv                    0/1     Running   0          3m52s   10.244.0.238   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-wl5qn                    0/1     Running   0          4m7s    10.244.0.235   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-zd9lq                    0/1     Running   0          4m7s    10.244.0.236   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-router-scheduler-74b896778b-fsstc   1/1     Running   0          93s     10.244.0.240   kserve-control-plane   <none>           <none>

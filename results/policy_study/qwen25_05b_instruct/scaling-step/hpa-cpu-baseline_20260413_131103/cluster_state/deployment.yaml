@@ -1,0 +1,190 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+  creationTimestamp: "2026-04-10T14:46:06Z"
+  generation: 172
+  labels:
+    app.kubernetes.io/component: llminferenceservice-workload
+    app.kubernetes.io/name: qwen25-0-5b-instruct
+    app.kubernetes.io/part-of: llminferenceservice
+    kserve.io/component: workload
+    llm-d.ai/role: both
+  name: qwen25-0-5b-instruct-kserve
+  namespace: llm-demo
+  ownerReferences:
+  - apiVersion: serving.kserve.io/v1alpha2
+    blockOwnerDeletion: true
+    controller: true
+    kind: LLMInferenceService
+    name: qwen25-0-5b-instruct
+    uid: d33cb376-7861-4797-a20b-4f753b7ddd0f
+  resourceVersion: "1110730"
+  uid: e29acfa8-4846-4788-a689-ff0d01948cd2
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 5
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: llminferenceservice-workload
+      app.kubernetes.io/name: qwen25-0-5b-instruct
+      app.kubernetes.io/part-of: llminferenceservice
+      kserve.io/component: workload
+      llm-d.ai/role: both
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app.kubernetes.io/component: llminferenceservice-workload
+        app.kubernetes.io/name: qwen25-0-5b-instruct
+        app.kubernetes.io/part-of: llminferenceservice
+        kserve.io/component: workload
+        llm-d.ai/role: both
+    spec:
+      containers:
+      - command:
+        - vllm
+        - serve
+        - /mnt/models
+        - --served-model-name
+        - Qwen/Qwen2.5-0.5B-Instruct
+        - --port
+        - "8000"
+        env:
+        - name: HOME
+          value: /home
+        - name: VLLM_LOGGING_LEVEL
+          value: INFO
+        - name: HF_HUB_CACHE
+          value: /models
+        image: quay.io/pierdipi/vllm-cpu:latest
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 10
+        name: main
+        ports:
+        - containerPort: 8000
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 60
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: "3"
+            memory: 12Gi
+          requests:
+            cpu: "1"
+            memory: 6Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+          runAsNonRoot: false
+          seccompProfile:
+            type: RuntimeDefault
+        startupProbe:
+          failureThreshold: 60
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: FallbackToLogsOnError
+        volumeMounts:
+        - mountPath: /home
+          name: home
+        - mountPath: /dev/shm
+          name: dshm
+        - mountPath: /models
+          name: model-cache
+        - mountPath: /var/run/kserve/tls
+          name: tls-certs
+          readOnly: true
+        - mountPath: /mnt/models
+          name: kserve-provision-location
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      initContainers:
+      - args:
+        - hf://Qwen/Qwen2.5-0.5B-Instruct
+        - /mnt/models
+        image: kserve/storage-initializer:v0.17.0
+        imagePullPolicy: IfNotPresent
+        name: storage-initializer
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: FallbackToLogsOnError
+        volumeMounts:
+        - mountPath: /mnt/models
+          name: kserve-provision-location
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: home
+      - emptyDir:
+          medium: Memory
+          sizeLimit: 1Gi
+        name: dshm
+      - emptyDir: {}
+        name: model-cache
+      - name: tls-certs
+        secret:
+          defaultMode: 420
+          secretName: qwen25-0-5b-instruct-kserve-self-signed-certs
+      - emptyDir: {}
+        name: kserve-provision-location
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2026-04-10T14:46:06Z"
+    lastUpdateTime: "2026-04-10T14:51:27Z"
+    message: ReplicaSet "qwen25-0-5b-instruct-kserve-665bf8f748" has successfully
+      progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2026-04-13T18:13:06Z"
+    lastUpdateTime: "2026-04-13T18:13:06Z"
+    message: Deployment does not have minimum availability.
+    reason: MinimumReplicasUnavailable
+    status: "False"
+    type: Available
+  observedGeneration: 172
+  readyReplicas: 1
+  replicas: 5
+  unavailableReplicas: 4
+  updatedReplicas: 5

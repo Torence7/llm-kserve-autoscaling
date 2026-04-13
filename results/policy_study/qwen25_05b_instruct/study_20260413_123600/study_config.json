@@ -1,0 +1,14 @@
+{
+  "model_file": "/users/Torence/llm-kserve-autoscaling/configs/models/qwen25-0.5b-instruct.yaml",
+  "model_key": "qwen25_05b_instruct",
+  "target": "http://localhost:8002/v1",
+  "prom_url": "http://localhost:9090",
+  "policy_list": "hpa-cpu-baseline keda-waiting-requests keda-token-aware keda-token-cache-conservative",
+  "scenario_list": "queue-pressure scaling-step conversation-sharegpt",
+  "repeats": 5,
+  "metric_interval": 5,
+  "policy_settle_seconds": 45,
+  "bench_timeout_seconds": 45,
+  "drain_timeout_seconds": 30,
+  "max_in_flight": 16
+}

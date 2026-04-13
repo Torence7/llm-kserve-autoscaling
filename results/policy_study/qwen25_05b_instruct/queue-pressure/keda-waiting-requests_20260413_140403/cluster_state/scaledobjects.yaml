@@ -1,0 +1,73 @@
+apiVersion: v1
+items:
+- apiVersion: keda.sh/v1alpha1
+  kind: ScaledObject
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"keda.sh/v1alpha1","kind":"ScaledObject","metadata":{"annotations":{},"name":"qwen25-05b-instruct-keda-waiting-requests","namespace":"llm-demo"},"spec":{"cooldownPeriod":30,"maxReplicaCount":5,"minReplicaCount":1,"pollingInterval":5,"scaleTargetRef":{"name":"qwen25-0-5b-instruct-kserve"},"triggers":[{"metadata":{"activationThreshold":"1","metricName":"vllm_waiting_requests","query":"sum(\n  vllm:num_requests_waiting{\n    namespace=\"llm-demo\"\n  }\n)\n","serverAddress":"http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090","threshold":"1"},"name":"vllm_waiting_requests","type":"prometheus"}]}}
+    creationTimestamp: "2026-04-13T19:04:29Z"
+    finalizers:
+    - finalizer.keda.sh
+    generation: 1
+    labels:
+      scaledobject.keda.sh/name: qwen25-05b-instruct-keda-waiting-requests
+    name: qwen25-05b-instruct-keda-waiting-requests
+    namespace: llm-demo
+    resourceVersion: "1121100"
+    uid: bf6c8525-d043-4bb0-b0c9-8062b406830a
+  spec:
+    cooldownPeriod: 30
+    maxReplicaCount: 5
+    minReplicaCount: 1
+    pollingInterval: 5
+    scaleTargetRef:
+      name: qwen25-0-5b-instruct-kserve
+    triggers:
+    - metadata:
+        activationThreshold: "1"
+        metricName: vllm_waiting_requests
+        query: |
+          sum(
+            vllm:num_requests_waiting{
+              namespace="llm-demo"
+            }
+          )
+        serverAddress: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+        threshold: "1"
+      name: vllm_waiting_requests
+      type: prometheus
+  status:
+    authenticationsTypes: ""
+    conditions:
+    - message: ScaledObject is defined correctly and is ready for scaling
+      reason: ScaledObjectReady
+      status: "True"
+      type: Ready
+    - message: Scaling is not performed because triggers are not active
+      reason: ScalerNotActive
+      status: "False"
+      type: Active
+    - message: No fallbacks are active on this scaled object
+      reason: NoFallbackFound
+      status: "False"
+      type: Fallback
+    - status: "False"
+      type: Paused
+    externalMetricNames:
+    - s0-prometheus
+    hpaName: keda-hpa-qwen25-05b-instruct-keda-waiting-requests
+    originalReplicaCount: 1
+    scaleTargetGVKR:
+      group: apps
+      kind: Deployment
+      resource: deployments
+      version: v1
+    scaleTargetKind: apps/v1.Deployment
+    triggersActivity:
+      s0-prometheus:
+        isActive: false
+    triggersTypes: prometheus
+kind: List
+metadata:
+  resourceVersion: ""

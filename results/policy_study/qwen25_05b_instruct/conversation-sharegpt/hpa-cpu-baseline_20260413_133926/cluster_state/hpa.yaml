@@ -1,0 +1,55 @@
+apiVersion: v1
+items:
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    creationTimestamp: "2026-04-13T18:41:51Z"
+    name: qwen25-0-5b-instruct-kserve
+    namespace: llm-demo
+    resourceVersion: "1117003"
+    uid: c19a1de4-bd41-4bb0-a2d7-30ab6737a2b6
+  spec:
+    maxReplicas: 5
+    metrics:
+    - resource:
+        name: cpu
+        target:
+          averageUtilization: 50
+          type: Utilization
+      type: Resource
+    minReplicas: 1
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: qwen25-0-5b-instruct-kserve
+  status:
+    conditions:
+    - lastTransitionTime: "2026-04-13T18:41:59Z"
+      message: the HPA controller was able to update the target scale to 5
+      reason: SucceededRescale
+      status: "True"
+      type: AbleToScale
+    - lastTransitionTime: "2026-04-13T18:41:59Z"
+      message: the HPA was able to successfully calculate a replica count from cpu
+        resource utilization (percentage of request)
+      reason: ValidMetricFound
+      status: "True"
+      type: ScalingActive
+    - lastTransitionTime: "2026-04-13T18:43:14Z"
+      message: the desired replica count is more than the maximum replica count
+      reason: TooManyReplicas
+      status: "True"
+      type: ScalingLimited
+    currentMetrics:
+    - resource:
+        current:
+          averageUtilization: 300
+          averageValue: 3003m
+        name: cpu
+      type: Resource
+    currentReplicas: 4
+    desiredReplicas: 5
+    lastScaleTime: "2026-04-13T18:43:30Z"
+kind: List
+metadata:
+  resourceVersion: ""
