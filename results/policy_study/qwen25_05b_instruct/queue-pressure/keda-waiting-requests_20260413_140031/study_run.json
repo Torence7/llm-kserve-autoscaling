@@ -1,8 +1,0 @@
-{
-  "study_root": "/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/study_20260413_123600",
-  "run_index": 16,
-  "repeat": 1,
-  "policy": "keda-waiting-requests",
-  "scenario": "queue-pressure",
-  "exit_code": 1
-}

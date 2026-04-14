@@ -1,4 +1,0 @@
-/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/scaling-step/hpa-cpu-baseline_20260413_130532
-/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/scaling-step/hpa-cpu-baseline_20260413_131103
-/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/scaling-step/hpa-cpu-baseline_20260413_131736
-/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/scaling-step/hpa-cpu-baseline_20260413_132510

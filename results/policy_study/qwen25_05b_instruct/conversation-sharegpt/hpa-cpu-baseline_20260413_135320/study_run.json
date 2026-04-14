@@ -1,8 +1,0 @@
-{
-  "study_root": "/users/Torence/llm-kserve-autoscaling/results/policy_study/qwen25_05b_instruct/study_20260413_123600",
-  "run_index": 14,
-  "repeat": 4,
-  "policy": "hpa-cpu-baseline",
-  "scenario": "conversation-sharegpt",
-  "exit_code": 1
-}

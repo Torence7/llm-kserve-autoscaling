@@ -1,0 +1,91 @@
+{
+  "scenario": "queue-pressure",
+  "request_type": "completions",
+  "target": "http://qwen25-0-5b-instruct-kserve-workload-svc.llm-demo.svc.cluster.local:8000/v1",
+  "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
+  "duration_seconds": 240,
+  "drain_timeout_seconds": 30.0,
+  "dataset_mode": "synthetic",
+  "dataset_path": null,
+  "dataset_rows": 0,
+  "phases": [
+    {
+      "name": "warmup",
+      "duration_seconds": 30,
+      "arrival_pattern": "constant",
+      "mean_rps": null,
+      "rps": 0.2
+    },
+    {
+      "name": "queue_build",
+      "duration_seconds": 90,
+      "arrival_pattern": "constant",
+      "mean_rps": null,
+      "rps": 1.25
+    },
+    {
+      "name": "pressure_peak",
+      "duration_seconds": 60,
+      "arrival_pattern": "constant",
+      "mean_rps": null,
+      "rps": 2.0
+    },
+    {
+      "name": "recovery",
+      "duration_seconds": 60,
+      "arrival_pattern": "constant",
+      "mean_rps": null,
+      "rps": 0.35
+    }
+  ],
+  "requests_launched": 257,
+  "requests_total_recorded": 148,
+  "requests_ok": 0,
+  "requests_failed": 148,
+  "requests_unfinished": 109,
+  "task_exception_count": 0,
+  "completion_rate": 0.0,
+  "recorded_success_rate": 0.0,
+  "latency_p50_ms": null,
+  "latency_p95_ms": null,
+  "ttft_p50_ms": null,
+  "ttft_p95_ms": null,
+  "per_phase": {
+    "warmup": {
+      "launched": 6,
+      "recorded": 6,
+      "ok": 0,
+      "failed": 6,
+      "unfinished": 0,
+      "completion_rate": 0.0,
+      "recorded_success_rate": 0.0
+    },
+    "queue_build": {
+      "launched": 112,
+      "recorded": 112,
+      "ok": 0,
+      "failed": 112,
+      "unfinished": 0,
+      "completion_rate": 0.0,
+      "recorded_success_rate": 0.0
+    },
+    "pressure_peak": {
+      "launched": 118,
+      "recorded": 30,
+      "ok": 0,
+      "failed": 30,
+      "unfinished": 88,
+      "completion_rate": 0.0,
+      "recorded_success_rate": 0.0
+    },
+    "recovery": {
+      "launched": 21,
+      "recorded": 0,
+      "ok": 0,
+      "failed": 0,
+      "unfinished": 21,
+      "completion_rate": 0.0,
+      "recorded_success_rate": null
+    }
+  }
+}
