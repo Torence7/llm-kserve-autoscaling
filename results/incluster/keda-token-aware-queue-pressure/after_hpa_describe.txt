@@ -6,10 +6,10 @@ Labels:                                    app.kubernetes.io/managed-by=keda-ope
                                            app.kubernetes.io/version=2.19.0
                                            scaledobject.keda.sh/name=qwen25-05b-instruct-keda-token-aware
 Annotations:                               <none>
-CreationTimestamp:                         Mon, 13 Apr 2026 22:57:30 -0500
+CreationTimestamp:                         Tue, 14 Apr 2026 10:00:08 -0500
 Reference:                                 Deployment/qwen25-0-5b-instruct-kserve
 Metrics:                                   ( current / target )
-  "s0-prometheus" (target average value):  4044m / 6
+  "s0-prometheus" (target average value):  2849m / 6
 Min replicas:                              1
 Max replicas:                              6
 Behavior:
@@ -26,15 +26,20 @@ Behavior:
       - Type: Percent  Value: 100  Period: 15 seconds
 Deployment pods:       2 current / 2 desired
 Conditions:
-  Type            Status  Reason              Message
-  ----            ------  ------              -------
-  AbleToScale     True    ReadyForNewScale    recommended size matches current size
-  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from external metric s0-prometheus(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-aware,},MatchExpressions:[]LabelSelectorRequirement{},})
-  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from external metric s0-prometheus(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-aware,},MatchExpressions:[]LabelSelectorRequirement{},})
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
 Events:
-  Type    Reason             Age    From                       Message
-  ----    ------             ----   ----                       -------
-  Normal  SuccessfulRescale  6m56s  horizontal-pod-autoscaler  New size: 2; reason: external metric s0-prometheus(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-aware,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
-  Normal  SuccessfulRescale  6m32s  horizontal-pod-autoscaler  New size: 4; reason: external metric s0-prometheus(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-aware,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
-  Normal  SuccessfulRescale  6m3s   horizontal-pod-autoscaler  New size: 6; reason: external metric s0-prometheus(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-aware,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
-  Normal  SuccessfulRescale  40s    horizontal-pod-autoscaler  New size: 2; reason: All metrics below target
+  Type    Reason             Age                    From                       Message
+  ----    ------             ----                   ----                       -------
+  Normal  SuccessfulRescale  9m37s                  horizontal-pod-autoscaler  New size: 2; reason: external metric s0-prometheus(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-aware,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
+  Normal  SuccessfulRescale  9m18s                  horizontal-pod-autoscaler  New size: 4; reason: external metric s0-prometheus(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-aware,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
+  Normal  SuccessfulRescale  8m59s                  horizontal-pod-autoscaler  New size: 6; reason: external metric s0-prometheus(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-aware,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
+  Normal  SuccessfulRescale  5m2s                   horizontal-pod-autoscaler  New size: 3; reason: external metric s0-prometheus(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-aware,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
+  Normal  SuccessfulRescale  4m17s                  horizontal-pod-autoscaler  New size: 5; reason: external metric s0-prometheus(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-aware,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
+  Normal  SuccessfulRescale  2m58s                  horizontal-pod-autoscaler  New size: 4; reason: All metrics below target
+  Normal  SuccessfulRescale  2m43s                  horizontal-pod-autoscaler  New size: 3; reason: All metrics below target
+  Normal  SuccessfulRescale  2m28s (x2 over 6m32s)  horizontal-pod-autoscaler  New size: 1; reason: All metrics below target
+  Normal  SuccessfulRescale  57s (x2 over 5m47s)    horizontal-pod-autoscaler  New size: 2; reason: external metric s0-prometheus(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-aware,},MatchExpressions:[]LabelSelectorRequirement{},}) above target

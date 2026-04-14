@@ -10,10 +10,10 @@ TARGET="${TARGET:-http://qwen25-0-5b-instruct-kserve-workload-svc.llm-demo.svc.c
 
 SCENARIO="${SCENARIO:-configs/scenarios/queue-pressure.yaml}"
 RESULTS_ROOT="${RESULTS_ROOT:-results/incluster}"
-MAX_IN_FLIGHT="${MAX_IN_FLIGHT:-32}"
-TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-180}"
-DRAIN_TIMEOUT_SECONDS="${DRAIN_TIMEOUT_SECONDS:-120}"
-COLLECT_DURATION_SECONDS="${COLLECT_DURATION_SECONDS:-420}"
+MAX_IN_FLIGHT="${MAX_IN_FLIGHT:-8}"
+TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-300}"
+DRAIN_TIMEOUT_SECONDS="${DRAIN_TIMEOUT_SECONDS:-300}"
+COLLECT_DURATION_SECONDS="${COLLECT_DURATION_SECONDS:-600}"
 COLLECT_INTERVAL_SECONDS="${COLLECT_INTERVAL_SECONDS:-5}"
 
 PROM_PORT_FORWARD="${PROM_PORT_FORWARD:-1}"
@@ -23,9 +23,9 @@ PROM_SVC="${PROM_SVC:-prometheus-kube-prometheus-prometheus}"
 
 POLICIES=(
   "hpa-cpu-baseline"
-  "keda-waiting-requests"
   "keda-token-aware"
   "keda-token-cache-composite"
+  "keda-waiting-requests"
 )
 
 log() {

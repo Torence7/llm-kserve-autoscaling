@@ -5,12 +5,12 @@ Annotations:  <none>
 API Version:  keda.sh/v1alpha1
 Kind:         ScaledObject
 Metadata:
-  Creation Timestamp:  2026-04-14T03:50:17Z
+  Creation Timestamp:  2026-04-14T15:20:31Z
   Finalizers:
     finalizer.keda.sh
   Generation:        2
-  Resource Version:  1250909
-  UID:               7ef030e2-b713-451f-9f5c-6c89a453fd72
+  Resource Version:  1423470
+  UID:               15ebd5fb-4799-472b-9b6e-bc19401d781f
 Spec:
   Advanced:
     Horizontal Pod Autoscaler Config:
@@ -87,8 +87,10 @@ Status:
       Is Active:   false
   Triggers Types:  prometheus
 Events:
-  Type    Reason              Age                  From           Message
-  ----    ------              ----                 ----           -------
-  Normal  KEDAScalersStarted  7m10s                keda-operator  Scaler prometheus is built
-  Normal  KEDAScalersStarted  7m9s                 keda-operator  Started scalers watch
-  Normal  ScaledObjectReady   7m9s (x2 over 7m9s)  keda-operator  ScaledObject is ready for scaling
+  Type    Reason              Age                From           Message
+  ----    ------              ----               ----           -------
+  Normal  KEDAScalersStarted  10m                keda-operator  Scaler prometheus is built
+  Normal  KEDAScalersStarted  10m                keda-operator  Started scalers watch
+  Normal  ScaledObjectReady   10m (x2 over 10m)  keda-operator  ScaledObject is ready for scaling
+  Normal  KEDAScalersStarted  7m53s              keda-operator  Scaler prometheus is built
+  Normal  KEDAScalersStarted  7m53s              keda-operator  Started scalers watch

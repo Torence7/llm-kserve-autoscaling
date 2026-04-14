@@ -5,12 +5,12 @@ Annotations:  <none>
 API Version:  keda.sh/v1alpha1
 Kind:         ScaledObject
 Metadata:
-  Creation Timestamp:  2026-04-14T04:04:45Z
+  Creation Timestamp:  2026-04-14T15:10:19Z
   Finalizers:
     finalizer.keda.sh
   Generation:        1
-  Resource Version:  1254814
-  UID:               1146f137-23d5-40a8-bb2a-8fde3fb63a19
+  Resource Version:  1420457
+  UID:               b6cf75eb-0793-43cd-9d6a-900188b08771
 Spec:
   Advanced:
     Horizontal Pod Autoscaler Config:
@@ -99,7 +99,9 @@ Status:
     Reason:   ScaledObjectReady
     Status:   True
     Type:     Ready
-    Status:   Unknown
+    Message:  Scaling is performed because triggers are active
+    Reason:   ScalerActive
+    Status:   True
     Type:     Active
     Message:  No fallbacks are active on this scaled object
     Reason:   NoFallbackFound
@@ -111,7 +113,7 @@ Status:
     s0-prometheus
     s1-prometheus
   Hpa Name:                qwen25-05b-instruct-keda-token-cache-composite-hpa
-  Last Active Time:        2026-04-14T04:04:46Z
+  Last Active Time:        2026-04-14T15:10:20Z
   Original Replica Count:  5
   Scale Target GVKR:
     Group:            apps
@@ -128,6 +130,6 @@ Status:
 Events:
   Type    Reason              Age              From           Message
   ----    ------              ----             ----           -------
-  Normal  KEDAScalersStarted  4s (x2 over 4s)  keda-operator  Scaler prometheus is built
-  Normal  KEDAScalersStarted  4s               keda-operator  Started scalers watch
-  Normal  ScaledObjectReady   4s               keda-operator  ScaledObject is ready for scaling
+  Normal  KEDAScalersStarted  5s (x2 over 5s)  keda-operator  Scaler prometheus is built
+  Normal  KEDAScalersStarted  5s               keda-operator  Started scalers watch
+  Normal  ScaledObjectReady   5s (x2 over 5s)  keda-operator  ScaledObject is ready for scaling

@@ -5,12 +5,12 @@ Annotations:  <none>
 API Version:  keda.sh/v1alpha1
 Kind:         ScaledObject
 Metadata:
-  Creation Timestamp:  2026-04-14T03:57:30Z
+  Creation Timestamp:  2026-04-14T15:00:08Z
   Finalizers:
     finalizer.keda.sh
   Generation:        2
-  Resource Version:  1254724
-  UID:               a7c0a654-7ac0-4bdf-8c9f-706bd1f740d3
+  Resource Version:  1420350
+  UID:               481d0e3b-1763-4121-9916-e94262926dfc
 Spec:
   Advanced:
     Horizontal Pod Autoscaler Config:
@@ -97,7 +97,7 @@ Status:
   External Metric Names:
     s0-prometheus
   Hpa Name:                qwen25-05b-instruct-keda-token-aware-hpa
-  Last Active Time:        2026-04-14T04:04:41Z
+  Last Active Time:        2026-04-14T15:10:13Z
   Original Replica Count:  5
   Scale Target GVKR:
     Group:            apps
@@ -110,10 +110,10 @@ Status:
       Is Active:   true
   Triggers Types:  prometheus
 Events:
-  Type    Reason              Age    From           Message
-  ----    ------              ----   ----           -------
-  Normal  KEDAScalersStarted  7m12s  keda-operator  Scaler prometheus is built
-  Normal  KEDAScalersStarted  7m11s  keda-operator  Started scalers watch
-  Normal  ScaledObjectReady   7m11s  keda-operator  ScaledObject is ready for scaling
-  Normal  KEDAScalersStarted  4m51s  keda-operator  Scaler prometheus is built
-  Normal  KEDAScalersStarted  4m51s  keda-operator  Started scalers watch
+  Type    Reason              Age                From           Message
+  ----    ------              ----               ----           -------
+  Normal  KEDAScalersStarted  10m                keda-operator  Scaler prometheus is built
+  Normal  KEDAScalersStarted  10m                keda-operator  Started scalers watch
+  Normal  ScaledObjectReady   10m (x2 over 10m)  keda-operator  ScaledObject is ready for scaling
+  Normal  KEDAScalersStarted  7m49s              keda-operator  Scaler prometheus is built
+  Normal  KEDAScalersStarted  7m48s              keda-operator  Started scalers watch

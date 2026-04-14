@@ -1,24 +1,24 @@
 # timestamp
-Mon Apr 13 11:04:50 PM CDT 2026
+Tue Apr 14 10:10:24 AM CDT 2026
 
 # scaledobjects
-NAME                                             SCALETARGETKIND      SCALETARGETNAME               MIN   MAX   READY   ACTIVE    FALLBACK   PAUSED   TRIGGERS     AUTHENTICATIONS   AGE
-qwen25-05b-instruct-keda-token-cache-composite   apps/v1.Deployment   qwen25-0-5b-instruct-kserve   1     6     True    Unknown   False      False    prometheus                     5s
+NAME                                             SCALETARGETKIND      SCALETARGETNAME               MIN   MAX   READY   ACTIVE   FALLBACK   PAUSED   TRIGGERS     AUTHENTICATIONS   AGE
+qwen25-05b-instruct-keda-token-cache-composite   apps/v1.Deployment   qwen25-0-5b-instruct-kserve   1     6     True    True     False      False    prometheus                     5s
 
 # hpa
 NAME                                                 REFERENCE                                TARGETS             MINPODS   MAXPODS   REPLICAS   AGE
 qwen25-05b-instruct-keda-token-cache-composite-hpa   Deployment/qwen25-0-5b-instruct-kserve   <unknown>/6 (avg)   1         6         0          4s
 
 # deployment
-NAME                          READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                             SELECTOR
-qwen25-0-5b-instruct-kserve   1/1     1            1           3d13h   main         quay.io/pierdipi/vllm-cpu:latest   app.kubernetes.io/component=llminferenceservice-workload,app.kubernetes.io/name=qwen25-0-5b-instruct,app.kubernetes.io/part-of=llminferenceservice,kserve.io/component=workload,llm-d.ai/role=both
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                             SELECTOR
+qwen25-0-5b-instruct-kserve   1/1     1            1           4d    main         quay.io/pierdipi/vllm-cpu:latest   app.kubernetes.io/component=llminferenceservice-workload,app.kubernetes.io/name=qwen25-0-5b-instruct,app.kubernetes.io/part-of=llminferenceservice,kserve.io/component=workload,llm-d.ai/role=both
 
 # pods
-NAME                                                            READY   STATUS        RESTARTS   AGE     IP             NODE                   NOMINATED NODE   READINESS GATES
-bench-client                                                    1/1     Running       0          8h      10.244.0.74    kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-665bf8f748-5gpgf                    0/1     Terminating   0          6s      10.244.0.197   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-665bf8f748-9fbpq                    1/1     Running       0          3d13h   10.244.0.18    kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-665bf8f748-cjm54                    0/1     Terminating   0          6s      10.244.0.196   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-665bf8f748-k8kxq                    0/1     Terminating   0          7s      10.244.0.195   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-665bf8f748-lm6q4                    0/1     Terminating   0          6m10s   10.244.0.192   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-router-scheduler-5658b47bcc-bbkgx   1/1     Running       0          4m14s   10.244.0.194   kserve-control-plane   <none>           <none>
+NAME                                                            READY   STATUS        RESTARTS   AGE   IP             NODE                   NOMINATED NODE   READINESS GATES
+bench-client                                                    1/1     Running       0          19h   10.244.0.74    kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-9fbpq                    1/1     Running       0          4d    10.244.0.18    kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-9x29p                    0/1     Terminating   0          7s    10.244.0.243   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-cw4mj                    0/1     Terminating   0          7s    10.244.0.242   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-ms25p                    0/1     Terminating   0          65s   10.244.0.238   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-pvlvw                    0/1     Terminating   0          7s    10.244.0.241   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-router-scheduler-6bcfff5bf6-ncksb   0/1     Running       0          21s   10.244.0.240   kserve-control-plane   <none>           <none>

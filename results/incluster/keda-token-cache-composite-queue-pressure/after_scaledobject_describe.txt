@@ -5,12 +5,12 @@ Annotations:  <none>
 API Version:  keda.sh/v1alpha1
 Kind:         ScaledObject
 Metadata:
-  Creation Timestamp:  2026-04-14T04:04:45Z
+  Creation Timestamp:  2026-04-14T15:10:19Z
   Finalizers:
     finalizer.keda.sh
   Generation:        1
-  Resource Version:  1256647
-  UID:               1146f137-23d5-40a8-bb2a-8fde3fb63a19
+  Resource Version:  1423318
+  UID:               b6cf75eb-0793-43cd-9d6a-900188b08771
 Spec:
   Advanced:
     Horizontal Pod Autoscaler Config:
@@ -113,7 +113,7 @@ Status:
     s0-prometheus
     s1-prometheus
   Hpa Name:                qwen25-05b-instruct-keda-token-cache-composite-hpa
-  Last Active Time:        2026-04-14T04:11:50Z
+  Last Active Time:        2026-04-14T15:20:24Z
   Original Replica Count:  5
   Scale Target GVKR:
     Group:            apps
@@ -130,12 +130,12 @@ Status:
 Events:
   Type    Reason              Age                    From           Message
   ----    ------              ----                   ----           -------
-  Normal  KEDAScalersStarted  7m6s (x2 over 7m6s)    keda-operator  Scaler prometheus is built
-  Normal  KEDAScalersStarted  7m6s                   keda-operator  Started scalers watch
-  Normal  ScaledObjectReady   7m6s                   keda-operator  ScaledObject is ready for scaling
-  Normal  KEDAScalersStarted  5m59s (x2 over 5m59s)  keda-operator  Scaler prometheus is built
-  Normal  KEDAScalersStarted  5m59s                  keda-operator  Started scalers watch
-  Normal  KEDAScalersStarted  4m18s (x2 over 4m18s)  keda-operator  Scaler prometheus is built
-  Normal  KEDAScalersStarted  4m18s                  keda-operator  Started scalers watch
-  Normal  KEDAScalersStarted  97s (x2 over 97s)      keda-operator  Scaler prometheus is built
-  Normal  KEDAScalersStarted  97s                    keda-operator  Started scalers watch
+  Normal  KEDAScalersStarted  10m (x2 over 10m)      keda-operator  Scaler prometheus is built
+  Normal  KEDAScalersStarted  10m                    keda-operator  Started scalers watch
+  Normal  ScaledObjectReady   10m (x2 over 10m)      keda-operator  ScaledObject is ready for scaling
+  Normal  KEDAScalersStarted  8m55s (x2 over 8m55s)  keda-operator  Scaler prometheus is built
+  Normal  KEDAScalersStarted  8m55s                  keda-operator  Started scalers watch
+  Normal  KEDAScalersStarted  7m23s (x2 over 7m23s)  keda-operator  Scaler prometheus is built
+  Normal  KEDAScalersStarted  7m23s                  keda-operator  Started scalers watch
+  Normal  KEDAScalersStarted  2m39s (x2 over 2m39s)  keda-operator  Scaler prometheus is built
+  Normal  KEDAScalersStarted  2m39s                  keda-operator  Started scalers watch

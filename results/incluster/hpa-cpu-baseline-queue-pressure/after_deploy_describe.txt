@@ -6,7 +6,7 @@ Labels:                 app.kubernetes.io/component=llminferenceservice-workload
                         app.kubernetes.io/part-of=llminferenceservice
                         kserve.io/component=workload
                         llm-d.ai/role=both
-Annotations:            deployment.kubernetes.io/revision: 1
+Annotations:            deployment.kubernetes.io/revision: 5
 Selector:               app.kubernetes.io/component=llminferenceservice-workload,app.kubernetes.io/name=qwen25-0-5b-instruct,app.kubernetes.io/part-of=llminferenceservice,kserve.io/component=workload,llm-d.ai/role=both
 Replicas:               5 desired | 5 updated | 5 total | 1 available | 4 unavailable
 StrategyType:           RollingUpdate
@@ -96,18 +96,14 @@ Conditions:
   ----           ------  ------
   Progressing    True    NewReplicaSetAvailable
   Available      False   MinimumReplicasUnavailable
-OldReplicaSets:  <none>
+OldReplicaSets:  qwen25-0-5b-instruct-kserve-7f9cfb5bf7 (0/0 replicas created)
 NewReplicaSet:   qwen25-0-5b-instruct-kserve-665bf8f748 (5/5 replicas created)
 Events:
   Type    Reason             Age                From                   Message
   ----    ------             ----               ----                   -------
-  Normal  ScalingReplicaSet  26m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 1 to 5
-  Normal  ScalingReplicaSet  26m (x2 over 72m)  deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 5 to 1
-  Normal  ScalingReplicaSet  26m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 1 to 2
-  Normal  ScalingReplicaSet  25m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 2 to 4
-  Normal  ScalingReplicaSet  25m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 4 to 5
-  Normal  ScalingReplicaSet  18m                deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 5 to 1
-  Normal  ScalingReplicaSet  11m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 1 to 5
-  Normal  ScalingReplicaSet  7m7s               deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 5 to 1
-  Normal  ScalingReplicaSet  6m22s              deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 1 to 4
-  Normal  ScalingReplicaSet  6m7s               deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 4 to 5
+  Normal  ScalingReplicaSet  10m (x2 over 14m)  deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-7f9cfb5bf7 from 0 to 1
+  Normal  ScalingReplicaSet  10m (x2 over 14m)  deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-7f9cfb5bf7 from 1 to 0
+  Normal  ScalingReplicaSet  10m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 2 to 5
+  Normal  ScalingReplicaSet  10m                deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 5 to 1
+  Normal  ScalingReplicaSet  9m17s              deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 1 to 4
+  Normal  ScalingReplicaSet  9m2s               deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 4 to 5

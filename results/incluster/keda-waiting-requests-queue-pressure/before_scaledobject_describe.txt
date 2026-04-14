@@ -5,12 +5,12 @@ Annotations:  <none>
 API Version:  keda.sh/v1alpha1
 Kind:         ScaledObject
 Metadata:
-  Creation Timestamp:  2026-04-14T03:50:17Z
+  Creation Timestamp:  2026-04-14T15:20:31Z
   Finalizers:
     finalizer.keda.sh
   Generation:        2
-  Resource Version:  1250909
-  UID:               7ef030e2-b713-451f-9f5c-6c89a453fd72
+  Resource Version:  1423408
+  UID:               15ebd5fb-4799-472b-9b6e-bc19401d781f
 Spec:
   Advanced:
     Horizontal Pod Autoscaler Config:
@@ -62,9 +62,7 @@ Status:
     Reason:   ScaledObjectReady
     Status:   True
     Type:     Ready
-    Message:  Scaling is not performed because triggers are not active
-    Reason:   ScalerNotActive
-    Status:   False
+    Status:   Unknown
     Type:     Active
     Message:  No fallbacks are active on this scaled object
     Reason:   NoFallbackFound

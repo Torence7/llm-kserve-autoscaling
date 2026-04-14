@@ -2,10 +2,10 @@ Name:                                                  qwen25-0-5b-instruct-kser
 Namespace:                                             llm-demo
 Labels:                                                <none>
 Annotations:                                           <none>
-CreationTimestamp:                                     Mon, 13 Apr 2026 22:43:08 -0500
+CreationTimestamp:                                     Tue, 14 Apr 2026 09:50:00 -0500
 Reference:                                             Deployment/qwen25-0-5b-instruct-kserve
 Metrics:                                               ( current / target )
-  resource cpu on pods  (as a percentage of request):  21% (212m) / 50%
+  resource cpu on pods  (as a percentage of request):  22% (228m) / 50%
 Min replicas:                                          1
 Max replicas:                                          5
 Deployment pods:                                       5 current / 5 desired
@@ -18,5 +18,5 @@ Conditions:
 Events:
   Type    Reason             Age    From                       Message
   ----    ------             ----   ----                       -------
-  Normal  SuccessfulRescale  6m22s  horizontal-pod-autoscaler  New size: 4; reason: cpu resource utilization (percentage of request) above target
-  Normal  SuccessfulRescale  6m7s   horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  9m17s  horizontal-pod-autoscaler  New size: 4; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  9m2s   horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
