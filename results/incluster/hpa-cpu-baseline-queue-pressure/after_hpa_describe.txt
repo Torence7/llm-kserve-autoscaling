@@ -2,10 +2,10 @@ Name:                                                  qwen25-0-5b-instruct-kser
 Namespace:                                             llm-demo
 Labels:                                                <none>
 Annotations:                                           <none>
-CreationTimestamp:                                     Tue, 14 Apr 2026 09:50:00 -0500
+CreationTimestamp:                                     Tue, 14 Apr 2026 15:35:21 -0500
 Reference:                                             Deployment/qwen25-0-5b-instruct-kserve
 Metrics:                                               ( current / target )
-  resource cpu on pods  (as a percentage of request):  22% (228m) / 50%
+  resource cpu on pods  (as a percentage of request):  21% (218m) / 50%
 Min replicas:                                          1
 Max replicas:                                          5
 Deployment pods:                                       5 current / 5 desired
@@ -14,9 +14,10 @@ Conditions:
   ----            ------  ------               -------
   AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
   ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
-  ScalingLimited  True    TooManyReplicas      the desired replica count is more than the maximum replica count
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
 Events:
-  Type    Reason             Age    From                       Message
-  ----    ------             ----   ----                       -------
-  Normal  SuccessfulRescale  9m17s  horizontal-pod-autoscaler  New size: 4; reason: cpu resource utilization (percentage of request) above target
-  Normal  SuccessfulRescale  9m2s   horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+  Type    Reason             Age   From                       Message
+  ----    ------             ----  ----                       -------
+  Normal  SuccessfulRescale  11m   horizontal-pod-autoscaler  New size: 2; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  11m   horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  11m   horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target

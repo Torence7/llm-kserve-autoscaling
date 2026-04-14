@@ -1,0 +1,18 @@
+# timestamp
+Tue Apr 14 03:35:21 PM CDT 2026
+
+# scaledobjects
+
+# hpa
+NAME                          REFERENCE                                TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+qwen25-0-5b-instruct-kserve   Deployment/qwen25-0-5b-instruct-kserve   cpu: 22%/50%   1         5         1          0s
+
+# deployment
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE    CONTAINERS   IMAGES                             SELECTOR
+qwen25-0-5b-instruct-kserve   1/1     1            1           4d5h   main         quay.io/pierdipi/vllm-cpu:latest   app.kubernetes.io/component=llminferenceservice-workload,app.kubernetes.io/name=qwen25-0-5b-instruct,app.kubernetes.io/part-of=llminferenceservice,kserve.io/component=workload,llm-d.ai/role=both
+
+# pods
+NAME                                                            READY   STATUS    RESTARTS   AGE    IP            NODE                   NOMINATED NODE   READINESS GATES
+bench-client                                                    1/1     Running   0          104s   10.244.0.54   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-9fbpq                    1/1     Running   0          4d5h   10.244.0.18   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-router-scheduler-768bbc4b7b-brd4l   1/1     Running   0          29m    10.244.0.52   kserve-control-plane   <none>           <none>

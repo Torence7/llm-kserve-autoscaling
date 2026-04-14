@@ -1,0 +1,135 @@
+Name:         qwen25-05b-instruct-keda-token-cache-composite
+Namespace:    llm-demo
+Labels:       scaledobject.keda.sh/name=qwen25-05b-instruct-keda-token-cache-composite
+Annotations:  <none>
+API Version:  keda.sh/v1alpha1
+Kind:         ScaledObject
+Metadata:
+  Creation Timestamp:  2026-04-14T15:10:19Z
+  Finalizers:
+    finalizer.keda.sh
+  Generation:        1
+  Resource Version:  1420457
+  UID:               b6cf75eb-0793-43cd-9d6a-900188b08771
+Spec:
+  Advanced:
+    Horizontal Pod Autoscaler Config:
+      Behavior:
+        Scale Down:
+          Policies:
+            Period Seconds:              15
+            Type:                        Percent
+            Value:                       100
+          Select Policy:                 Max
+          Stabilization Window Seconds:  60
+        Scale Up:
+          Policies:
+            Period Seconds:              15
+            Type:                        Pods
+            Value:                       2
+            Period Seconds:              15
+            Type:                        Percent
+            Value:                       100
+          Select Policy:                 Max
+          Stabilization Window Seconds:  0
+      Name:                              qwen25-05b-instruct-keda-token-cache-composite-hpa
+    Restore To Original Replica Count:   true
+    Scaling Modifiers:
+      Activation Target:  1
+      Formula:            (token_pressure * 1.0) + (kv_cache_pct * 1.5)
+      Target:             6
+  Cooldown Period:        60
+  Max Replica Count:      6
+  Min Replica Count:      1
+  Polling Interval:       5
+  Scale Target Ref:
+    Name:  qwen25-0-5b-instruct-kserve
+  Triggers:
+    Metadata:
+      Activation Threshold:  1
+      Metric Name:           vllm_token_pressure
+      Query:                 (
+  0.25 *
+  sum(
+    vllm:num_requests_running{namespace="llm-demo"}
+  )
+)
++
+(
+  2.0 *
+  sum(
+    vllm:num_requests_waiting{namespace="llm-demo"}
+  )
+)
++
+(
+  0.10 *
+  sum(
+    rate(vllm:prompt_tokens_total{namespace="llm-demo"}[1m])
+  )
+)
++
+(
+  0.05 *
+  sum(
+    rate(vllm:generation_tokens_total{namespace="llm-demo"}[1m])
+  )
+)
+
+      Server Address:  http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+      Threshold:       6
+    Name:              token_pressure
+    Type:              prometheus
+    Metadata:
+      Activation Threshold:  0.5
+      Metric Name:           vllm_kv_cache_usage_percent
+      Query:                 avg(
+  vllm:kv_cache_usage_perc{namespace="llm-demo"}
+)
+
+      Server Address:  http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+      Threshold:       1.0
+    Name:              kv_cache_pct
+    Type:              prometheus
+Status:
+  Authentications Types:  
+  Composite Scaler Name:  composite-metric
+  Conditions:
+    Message:  ScaledObject is defined correctly and is ready for scaling
+    Reason:   ScaledObjectReady
+    Status:   True
+    Type:     Ready
+    Message:  Scaling is performed because triggers are active
+    Reason:   ScalerActive
+    Status:   True
+    Type:     Active
+    Message:  No fallbacks are active on this scaled object
+    Reason:   NoFallbackFound
+    Status:   False
+    Type:     Fallback
+    Status:   False
+    Type:     Paused
+  External Metric Names:
+    s0-prometheus
+    s1-prometheus
+  Hpa Name:                qwen25-05b-instruct-keda-token-cache-composite-hpa
+  Last Active Time:        2026-04-14T15:10:20Z
+  Original Replica Count:  5
+  Scale Target GVKR:
+    Group:            apps
+    Kind:             Deployment
+    Resource:         deployments
+    Version:          v1
+  Scale Target Kind:  apps/v1.Deployment
+  Triggers Activity:
+    s0-prometheus:
+      Is Active:  false
+    s1-prometheus:
+      Is Active:   false
+  Triggers Types:  prometheus
+Events:
+  Type    Reason              Age              From           Message
+  ----    ------              ----             ----           -------
+  Normal  KEDAScalersStarted  5s (x2 over 5s)  keda-operator  Scaler prometheus is built
+  Normal  KEDAScalersStarted  5s               keda-operator  Started scalers watch
+  Normal  ScaledObjectReady   5s (x2 over 5s)  keda-operator  ScaledObject is ready for scaling

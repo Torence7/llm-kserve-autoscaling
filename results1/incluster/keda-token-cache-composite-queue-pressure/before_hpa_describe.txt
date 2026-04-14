@@ -1,0 +1,28 @@
+Name:                                         qwen25-05b-instruct-keda-token-cache-composite-hpa
+Namespace:                                    llm-demo
+Labels:                                       app.kubernetes.io/managed-by=keda-operator
+                                              app.kubernetes.io/name=qwen25-05b-instruct-keda-token-cache-composite-hpa
+                                              app.kubernetes.io/part-of=qwen25-05b-instruct-keda-token-cache-composite
+                                              app.kubernetes.io/version=2.19.0
+                                              scaledobject.keda.sh/name=qwen25-05b-instruct-keda-token-cache-composite
+Annotations:                                  <none>
+CreationTimestamp:                            Tue, 14 Apr 2026 10:10:20 -0500
+Reference:                                    Deployment/qwen25-0-5b-instruct-kserve
+Metrics:                                      ( current / target )
+  "composite-metric" (target average value):  <unknown> / 6
+Min replicas:                                 1
+Max replicas:                                 6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 2    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 60 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       0 current / 0 desired
+Events:                <none>

@@ -5,23 +5,23 @@ Annotations:  <none>
 API Version:  keda.sh/v1alpha1
 Kind:         ScaledObject
 Metadata:
-  Creation Timestamp:  2026-04-14T15:10:19Z
+  Creation Timestamp:  2026-04-14T20:59:50Z
   Finalizers:
     finalizer.keda.sh
   Generation:        1
-  Resource Version:  1423318
-  UID:               b6cf75eb-0793-43cd-9d6a-900188b08771
+  Resource Version:  1506308
+  UID:               f8167dea-6e4e-481c-b9b6-30162e085c91
 Spec:
   Advanced:
     Horizontal Pod Autoscaler Config:
       Behavior:
         Scale Down:
           Policies:
-            Period Seconds:              15
+            Period Seconds:              30
             Type:                        Percent
-            Value:                       100
+            Value:                       50
           Select Policy:                 Max
-          Stabilization Window Seconds:  60
+          Stabilization Window Seconds:  300
         Scale Up:
           Policies:
             Period Seconds:              15
@@ -40,13 +40,14 @@ Spec:
       Target:             6
   Cooldown Period:        60
   Max Replica Count:      6
-  Min Replica Count:      1
+  Min Replica Count:      2
   Polling Interval:       5
   Scale Target Ref:
     Name:  qwen25-0-5b-instruct-kserve
   Triggers:
     Metadata:
       Activation Threshold:  1
+      Ignore Null Values:    false
       Metric Name:           vllm_token_pressure
       Query:                 (
   0.25 *
@@ -78,10 +79,12 @@ Spec:
 
       Server Address:  http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
       Threshold:       6
+      Timeout:         10s
     Name:              token_pressure
     Type:              prometheus
     Metadata:
       Activation Threshold:  0.5
+      Ignore Null Values:    false
       Metric Name:           vllm_kv_cache_usage_percent
       Query:                 avg(
   vllm:kv_cache_usage_perc{namespace="llm-demo"}
@@ -89,6 +92,7 @@ Spec:
 
       Server Address:  http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
       Threshold:       1.0
+      Timeout:         10s
     Name:              kv_cache_pct
     Type:              prometheus
 Status:
@@ -99,9 +103,9 @@ Status:
     Reason:   ScaledObjectReady
     Status:   True
     Type:     Ready
-    Message:  Scaling is performed because triggers are active
-    Reason:   ScalerActive
-    Status:   True
+    Message:  Scaling is not performed because triggers are not active
+    Reason:   ScalerNotActive
+    Status:   False
     Type:     Active
     Message:  No fallbacks are active on this scaled object
     Reason:   NoFallbackFound
@@ -113,7 +117,7 @@ Status:
     s0-prometheus
     s1-prometheus
   Hpa Name:                qwen25-05b-instruct-keda-token-cache-composite-hpa
-  Last Active Time:        2026-04-14T15:20:24Z
+  Last Active Time:        2026-04-14T21:06:14Z
   Original Replica Count:  5
   Scale Target GVKR:
     Group:            apps
@@ -128,14 +132,10 @@ Status:
       Is Active:   false
   Triggers Types:  prometheus
 Events:
-  Type    Reason              Age                    From           Message
-  ----    ------              ----                   ----           -------
-  Normal  KEDAScalersStarted  10m (x2 over 10m)      keda-operator  Scaler prometheus is built
-  Normal  KEDAScalersStarted  10m                    keda-operator  Started scalers watch
-  Normal  ScaledObjectReady   10m (x2 over 10m)      keda-operator  ScaledObject is ready for scaling
-  Normal  KEDAScalersStarted  8m55s (x2 over 8m55s)  keda-operator  Scaler prometheus is built
-  Normal  KEDAScalersStarted  8m55s                  keda-operator  Started scalers watch
-  Normal  KEDAScalersStarted  7m23s (x2 over 7m23s)  keda-operator  Scaler prometheus is built
-  Normal  KEDAScalersStarted  7m23s                  keda-operator  Started scalers watch
-  Normal  KEDAScalersStarted  2m39s (x2 over 2m39s)  keda-operator  Scaler prometheus is built
-  Normal  KEDAScalersStarted  2m39s                  keda-operator  Started scalers watch
+  Type    Reason              Age                From           Message
+  ----    ------              ----               ----           -------
+  Normal  KEDAScalersStarted  12m (x2 over 12m)  keda-operator  Scaler prometheus is built
+  Normal  KEDAScalersStarted  12m                keda-operator  Started scalers watch
+  Normal  ScaledObjectReady   12m (x2 over 12m)  keda-operator  ScaledObject is ready for scaling
+  Normal  KEDAScalersStarted  11m (x2 over 11m)  keda-operator  Scaler prometheus is built
+  Normal  KEDAScalersStarted  11m                keda-operator  Started scalers watch

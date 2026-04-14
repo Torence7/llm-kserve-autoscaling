@@ -1,5 +1,5 @@
 name: queue-pressure
-description: Queue-forming workload that still allows replica startup effects to be observed.
+description: Queue-forming workload with enough headroom to observe scale-out.
 request_type: completions
 duration_seconds: 240
 
@@ -9,33 +9,33 @@ dataset:
 prompt:
   style: repeated_context
   seed_text: "Queue-aware autoscaling for LLM serving must account for prompt prefill, decode throughput, and backpressure under bursty demand. "
-  min_tokens: 256
-  max_tokens: 512
+  min_tokens: 128
+  max_tokens: 256
 
 output:
-  max_tokens_min: 48
-  max_tokens_max: 96
+  max_tokens_min: 32
+  max_tokens_max: 64
 
 phases:
   - name: warmup
     duration_seconds: 30
     arrival_pattern: constant
-    rps: 0.10
+    rps: 0.05
 
   - name: queue_build
     duration_seconds: 90
     arrival_pattern: constant
-    rps: 0.35
+    rps: 0.20
 
   - name: pressure_peak
     duration_seconds: 60
     arrival_pattern: constant
-    rps: 0.55
+    rps: 0.30
 
   - name: recovery
     duration_seconds: 60
     arrival_pattern: constant
-    rps: 0.15
+    rps: 0.10
 
 slo:
   ttft_p95_ms: 15000

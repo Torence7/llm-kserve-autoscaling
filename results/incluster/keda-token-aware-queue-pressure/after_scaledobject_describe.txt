@@ -5,23 +5,23 @@ Annotations:  <none>
 API Version:  keda.sh/v1alpha1
 Kind:         ScaledObject
 Metadata:
-  Creation Timestamp:  2026-04-14T15:00:08Z
+  Creation Timestamp:  2026-04-14T20:47:34Z
   Finalizers:
     finalizer.keda.sh
   Generation:        2
-  Resource Version:  1420350
-  UID:               481d0e3b-1763-4121-9916-e94262926dfc
+  Resource Version:  1503031
+  UID:               11106cb9-66f3-495a-a5dd-6dd78f7f6a70
 Spec:
   Advanced:
     Horizontal Pod Autoscaler Config:
       Behavior:
         Scale Down:
           Policies:
-            Period Seconds:              15
+            Period Seconds:              30
             Type:                        Percent
-            Value:                       100
+            Value:                       50
           Select Policy:                 Max
-          Stabilization Window Seconds:  60
+          Stabilization Window Seconds:  300
         Scale Up:
           Policies:
             Period Seconds:              15
@@ -35,15 +35,16 @@ Spec:
       Name:                              qwen25-05b-instruct-keda-token-aware-hpa
     Restore To Original Replica Count:   true
     Scaling Modifiers:
-  Cooldown Period:    45
+  Cooldown Period:    60
   Max Replica Count:  6
-  Min Replica Count:  1
+  Min Replica Count:  2
   Polling Interval:   5
   Scale Target Ref:
     Name:  qwen25-0-5b-instruct-kserve
   Triggers:
     Metadata:
       Activation Threshold:  1
+      Ignore Null Values:    false
       Metric Name:           vllm_token_pressure
       Query:                 (
   0.25 *
@@ -75,6 +76,7 @@ Spec:
 
       Server Address:  http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
       Threshold:       6
+      Timeout:         10s
     Name:              vllm_token_pressure
     Type:              prometheus
 Status:
@@ -84,9 +86,9 @@ Status:
     Reason:   ScaledObjectReady
     Status:   True
     Type:     Ready
-    Message:  Scaling is performed because triggers are active
-    Reason:   ScalerActive
-    Status:   True
+    Message:  Scaling is not performed because triggers are not active
+    Reason:   ScalerNotActive
+    Status:   False
     Type:     Active
     Message:  No fallbacks are active on this scaled object
     Reason:   NoFallbackFound
@@ -97,7 +99,7 @@ Status:
   External Metric Names:
     s0-prometheus
   Hpa Name:                qwen25-05b-instruct-keda-token-aware-hpa
-  Last Active Time:        2026-04-14T15:10:13Z
+  Last Active Time:        2026-04-14T20:53:34Z
   Original Replica Count:  5
   Scale Target GVKR:
     Group:            apps
@@ -107,13 +109,11 @@ Status:
   Scale Target Kind:  apps/v1.Deployment
   Triggers Activity:
     s0-prometheus:
-      Is Active:   true
+      Is Active:   false
   Triggers Types:  prometheus
 Events:
   Type    Reason              Age                From           Message
   ----    ------              ----               ----           -------
-  Normal  KEDAScalersStarted  10m                keda-operator  Scaler prometheus is built
-  Normal  KEDAScalersStarted  10m                keda-operator  Started scalers watch
-  Normal  ScaledObjectReady   10m (x2 over 10m)  keda-operator  ScaledObject is ready for scaling
-  Normal  KEDAScalersStarted  7m49s              keda-operator  Scaler prometheus is built
-  Normal  KEDAScalersStarted  7m48s              keda-operator  Started scalers watch
+  Normal  KEDAScalersStarted  12m                keda-operator  Scaler prometheus is built
+  Normal  KEDAScalersStarted  12m                keda-operator  Started scalers watch
+  Normal  ScaledObjectReady   12m (x2 over 12m)  keda-operator  ScaledObject is ready for scaling

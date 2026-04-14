@@ -10,10 +10,10 @@ TARGET="${TARGET:-http://qwen25-0-5b-instruct-kserve-workload-svc.llm-demo.svc.c
 
 SCENARIO="${SCENARIO:-configs/scenarios/queue-pressure.yaml}"
 RESULTS_ROOT="${RESULTS_ROOT:-results/incluster}"
-MAX_IN_FLIGHT="${MAX_IN_FLIGHT:-8}"
-TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-300}"
-DRAIN_TIMEOUT_SECONDS="${DRAIN_TIMEOUT_SECONDS:-300}"
-COLLECT_DURATION_SECONDS="${COLLECT_DURATION_SECONDS:-600}"
+MAX_IN_FLIGHT="${MAX_IN_FLIGHT:-4}"
+TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-420}"
+DRAIN_TIMEOUT_SECONDS="${DRAIN_TIMEOUT_SECONDS:-600}"
+COLLECT_DURATION_SECONDS="${COLLECT_DURATION_SECONDS:-720}"
 COLLECT_INTERVAL_SECONDS="${COLLECT_INTERVAL_SECONDS:-5}"
 
 PROM_PORT_FORWARD="${PROM_PORT_FORWARD:-1}"
@@ -25,7 +25,6 @@ POLICIES=(
   "hpa-cpu-baseline"
   "keda-token-aware"
   "keda-token-cache-composite"
-  "keda-waiting-requests"
 )
 
 log() {
@@ -82,6 +81,7 @@ clear_autoscalers() {
   log "Clearing HPAs and ScaledObjects"
   kubectl delete hpa --all -n "${NS}" >/dev/null 2>&1 || true
   kubectl delete scaledobject --all -n "${NS}" >/dev/null 2>&1 || true
+  sleep 5
 }
 
 apply_policy() {
@@ -112,7 +112,8 @@ reset_to_one_replica() {
   done
 
   log "Deployment did not settle at 1 ready replica"
-  kubectl get deploy "${DEPLOY}" -n "${NS}"
+  kubectl get deploy "${DEPLOY}" -n "${NS}" -o wide || true
+  kubectl get pods -n "${NS}" -o wide || true
   exit 1
 }
 
@@ -128,6 +129,7 @@ wait_for_autoscaler_ready() {
       fi
       sleep 2
     done
+
     log "Timed out waiting for HPA ${DEPLOY}"
     kubectl get hpa -n "${NS}" || true
     exit 1
@@ -135,12 +137,14 @@ wait_for_autoscaler_ready() {
 
   local so_name="${MODEL_KEY//_/-}-${policy}"
   log "Waiting for ScaledObject ${so_name} and its generated HPA"
-  for _ in $(seq 1 45); do
+
+  for _ in $(seq 1 60); do
     local so_ready hpa_count
     so_ready="$(kubectl get scaledobject -n "${NS}" "${so_name}" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || true)"
     hpa_count="$(kubectl get hpa -n "${NS}" --no-headers 2>/dev/null | wc -l | tr -d ' ')"
+
     if [[ "${so_ready}" == "True" && "${hpa_count}" -ge 1 ]]; then
-      log "ScaledObject ${so_name} is Ready and HPA exists"
+      log "ScaledObject ${so_name} is Ready and an HPA exists"
       return
     fi
     sleep 2
@@ -173,8 +177,14 @@ capture_autoscaler_state() {
     kubectl get pods -n "${NS}" -o wide || true
   } > "${local_dir}/${prefix}_autoscaler_overview.txt"
 
-  kubectl get scaledobject -n "${NS}" > /dev/null 2>&1 &&     kubectl describe scaledobject -n "${NS}" > "${local_dir}/${prefix}_scaledobject_describe.txt" 2>&1 || true
-  kubectl get hpa -n "${NS}" > /dev/null 2>&1 &&     kubectl describe hpa -n "${NS}" > "${local_dir}/${prefix}_hpa_describe.txt" 2>&1 || true
+  if kubectl get scaledobject -n "${NS}" >/dev/null 2>&1; then
+    kubectl describe scaledobject -n "${NS}" > "${local_dir}/${prefix}_scaledobject_describe.txt" 2>&1 || true
+  fi
+
+  if kubectl get hpa -n "${NS}" >/dev/null 2>&1; then
+    kubectl describe hpa -n "${NS}" > "${local_dir}/${prefix}_hpa_describe.txt" 2>&1 || true
+  fi
+
   kubectl describe deploy "${DEPLOY}" -n "${NS}" > "${local_dir}/${prefix}_deploy_describe.txt" 2>&1 || true
   kubectl get events -n "${NS}" --sort-by=.metadata.creationTimestamp > "${local_dir}/${prefix}_events.txt" 2>&1 || true
   kubectl logs -n keda deploy/keda-operator --tail=200 > "${local_dir}/${prefix}_keda_operator.log" 2>&1 || true
@@ -184,9 +194,11 @@ run_one_policy() {
   local policy="$1"
   local run_name="${policy}-queue-pressure"
   local local_dir="${RESULTS_ROOT}/${run_name}"
+  local benchmark_dir="${local_dir}/benchmark"
   local pod_dir="/work/out/${run_name}"
 
   mkdir -p "${local_dir}"
+  mkdir -p "${benchmark_dir}"
 
   clear_autoscalers
   apply_policy "${policy}"
@@ -197,7 +209,14 @@ run_one_policy() {
   capture_autoscaler_state "${local_dir}" "before"
 
   log "Starting metrics collector for ${run_name}"
-  python scripts/metrics/collect_metrics.py     --prom-url "${PROM_URL}"     --duration-seconds "${COLLECT_DURATION_SECONDS}"     --interval-seconds "${COLLECT_INTERVAL_SECONDS}"     --deployment-name "${DEPLOY}"     --model-name "${MODEL}"     --namespace "${NS}"     --outcsv "${local_dir}/system_metrics.csv" &
+  python scripts/metrics/collect_metrics.py \
+    --prom-url "${PROM_URL}" \
+    --duration-seconds "${COLLECT_DURATION_SECONDS}" \
+    --interval-seconds "${COLLECT_INTERVAL_SECONDS}" \
+    --deployment-name "${DEPLOY}" \
+    --model-name "${MODEL}" \
+    --namespace "${NS}" \
+    --outcsv "${local_dir}/system_metrics.csv" &
   local collector_pid=$!
 
   sleep 10
@@ -206,11 +225,18 @@ run_one_policy() {
   kubectl -n "${NS}" exec "${POD}" -- bash -lc "
 cd /work
 mkdir -p '${pod_dir}'
-PYTHONPATH=. python scripts/benchmark/run_benchmark.py   --target '${TARGET}'   --model-name '${MODEL}'   --scenario '${SCENARIO}'   --outdir '${pod_dir}'   --max-in-flight ${MAX_IN_FLIGHT}   --timeout-seconds ${TIMEOUT_SECONDS}   --drain-timeout-seconds ${DRAIN_TIMEOUT_SECONDS}
+PYTHONPATH=. python scripts/benchmark/run_benchmark.py \
+  --target '${TARGET}' \
+  --model-name '${MODEL}' \
+  --scenario '${SCENARIO}' \
+  --outdir '${pod_dir}' \
+  --max-in-flight ${MAX_IN_FLIGHT} \
+  --timeout-seconds ${TIMEOUT_SECONDS} \
+  --drain-timeout-seconds ${DRAIN_TIMEOUT_SECONDS}
 "
 
   log "Copying benchmark results for ${run_name}"
-  kubectl -n "${NS}" cp "${POD}:${pod_dir}" "${local_dir}"
+  kubectl -n "${NS}" cp "${POD}:${pod_dir}/." "${benchmark_dir}"
 
   log "Waiting for metrics collector to finish"
   wait "${collector_pid}"
@@ -219,7 +245,7 @@ PYTHONPATH=. python scripts/benchmark/run_benchmark.py   --target '${TARGET}'   
   capture_autoscaler_state "${local_dir}" "after"
 
   log "Finished ${run_name}"
-  ls -1 "${local_dir}/${run_name}" || true
+  ls -1 "${benchmark_dir}" || true
   echo
 }
 
