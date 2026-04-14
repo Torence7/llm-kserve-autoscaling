@@ -1,5 +1,5 @@
 name: queue-pressure
-description: Deliberately queue-forming long-context workload for stressing queue-aware and token-aware autoscaling.
+description: Queue-forming long-context workload that still leaves enough headroom for replica changes to show up on CPU-backed serving.
 request_type: completions
 duration_seconds: 240
 
@@ -9,34 +9,34 @@ dataset:
 prompt:
   style: repeated_context
   seed_text: "Queue-aware autoscaling for LLM serving must account for prompt prefill, decode throughput, and backpressure under bursty demand. "
-  min_tokens: 1600
-  max_tokens: 2600
+  min_tokens: 896
+  max_tokens: 1408
 
 output:
-  max_tokens_min: 192
-  max_tokens_max: 320
+  max_tokens_min: 96
+  max_tokens_max: 160
 
 phases:
   - name: warmup
     duration_seconds: 30
     arrival_pattern: constant
-    rps: 0.20
+    rps: 0.15
 
   - name: queue_build
     duration_seconds: 90
     arrival_pattern: constant
-    rps: 1.25
+    rps: 0.70
 
   - name: pressure_peak
     duration_seconds: 60
     arrival_pattern: constant
-    rps: 2.00
+    rps: 1.10
 
   - name: recovery
     duration_seconds: 60
     arrival_pattern: constant
-    rps: 0.35
+    rps: 0.25
 
 slo:
-  ttft_p95_ms: 6000
-  e2e_p95_ms: 20000
+  ttft_p95_ms: 12000
+  e2e_p95_ms: 60000

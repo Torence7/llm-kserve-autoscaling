@@ -1,0 +1,21 @@
+# timestamp
+Mon Apr 13 11:04:42 PM CDT 2026
+
+# scaledobjects
+NAME                                   SCALETARGETKIND      SCALETARGETNAME               MIN   MAX   READY   ACTIVE   FALLBACK   PAUSED   TRIGGERS     AUTHENTICATIONS   AGE
+qwen25-05b-instruct-keda-token-aware   apps/v1.Deployment   qwen25-0-5b-instruct-kserve   1     6     True    True     False      False    prometheus                     7m12s
+
+# hpa
+NAME                                       REFERENCE                                TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+qwen25-05b-instruct-keda-token-aware-hpa   Deployment/qwen25-0-5b-instruct-kserve   4044m/6 (avg)   1         6         2          7m12s
+
+# deployment
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                             SELECTOR
+qwen25-0-5b-instruct-kserve   1/2     2            1           3d13h   main         quay.io/pierdipi/vllm-cpu:latest   app.kubernetes.io/component=llminferenceservice-workload,app.kubernetes.io/name=qwen25-0-5b-instruct,app.kubernetes.io/part-of=llminferenceservice,kserve.io/component=workload,llm-d.ai/role=both
+
+# pods
+NAME                                                            READY   STATUS    RESTARTS   AGE     IP             NODE                   NOMINATED NODE   READINESS GATES
+bench-client                                                    1/1     Running   0          8h      10.244.0.74    kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-9fbpq                    1/1     Running   0          3d13h   10.244.0.18    kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-lm6q4                    0/1     Running   0          6m2s    10.244.0.192   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-router-scheduler-5658b47bcc-bbkgx   1/1     Running   0          4m6s    10.244.0.194   kserve-control-plane   <none>           <none>

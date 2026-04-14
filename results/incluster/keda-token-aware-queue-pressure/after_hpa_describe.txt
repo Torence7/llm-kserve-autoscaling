@@ -1,0 +1,40 @@
+Name:                                      qwen25-05b-instruct-keda-token-aware-hpa
+Namespace:                                 llm-demo
+Labels:                                    app.kubernetes.io/managed-by=keda-operator
+                                           app.kubernetes.io/name=qwen25-05b-instruct-keda-token-aware-hpa
+                                           app.kubernetes.io/part-of=qwen25-05b-instruct-keda-token-aware
+                                           app.kubernetes.io/version=2.19.0
+                                           scaledobject.keda.sh/name=qwen25-05b-instruct-keda-token-aware
+Annotations:                               <none>
+CreationTimestamp:                         Mon, 13 Apr 2026 22:57:30 -0500
+Reference:                                 Deployment/qwen25-0-5b-instruct-kserve
+Metrics:                                   ( current / target )
+  "s0-prometheus" (target average value):  4044m / 6
+Min replicas:                              1
+Max replicas:                              6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 2    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 60 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       2 current / 2 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from external metric s0-prometheus(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-aware,},MatchExpressions:[]LabelSelectorRequirement{},})
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  6m56s  horizontal-pod-autoscaler  New size: 2; reason: external metric s0-prometheus(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-aware,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
+  Normal  SuccessfulRescale  6m32s  horizontal-pod-autoscaler  New size: 4; reason: external metric s0-prometheus(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-aware,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
+  Normal  SuccessfulRescale  6m3s   horizontal-pod-autoscaler  New size: 6; reason: external metric s0-prometheus(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-aware,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
+  Normal  SuccessfulRescale  40s    horizontal-pod-autoscaler  New size: 2; reason: All metrics below target

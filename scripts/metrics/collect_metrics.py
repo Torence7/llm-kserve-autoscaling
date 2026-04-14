@@ -12,6 +12,12 @@ import requests
 READY_REPLICAS_TEMPLATE = (
     'kube_deployment_status_replicas_ready{{deployment="{deployment}", namespace="{namespace}"}}'
 )
+DESIRED_REPLICAS_TEMPLATE = (
+    'kube_deployment_spec_replicas{{deployment="{deployment}", namespace="{namespace}"}}'
+)
+AVAILABLE_REPLICAS_TEMPLATE = (
+    'kube_deployment_status_replicas_available{{deployment="{deployment}", namespace="{namespace}"}}'
+)
 
 
 def prom_query(prom_url: str, query: str, timeout_s: float = 10.0) -> Optional[float]:
@@ -49,7 +55,9 @@ def write_row(writer: csv.writer, row: Dict[str, Optional[float]]) -> None:
         row["num_requests_waiting"],
         row["avg_generation_throughput_toks_per_s"],
         row["kv_cache_usage_perc"],
+        row["desired_replicas"],
         row["ready_replicas"],
+        row["available_replicas"],
     ])
 
 
@@ -77,7 +85,7 @@ def main() -> None:
     ap.add_argument(
         "--deployment-name",
         required=True,
-        help="Kubernetes deployment name for ready replica query",
+        help="Kubernetes deployment name for replica queries",
     )
     ap.add_argument(
         "--model-name",
@@ -87,7 +95,7 @@ def main() -> None:
     ap.add_argument(
         "--namespace",
         default="llm-demo",
-        help="Kubernetes namespace for ready replica query",
+        help="Kubernetes namespace for deployment queries",
     )
     ap.add_argument(
         "--outcsv",
@@ -100,6 +108,14 @@ def main() -> None:
     outcsv.parent.mkdir(parents=True, exist_ok=True)
 
     ready_q = READY_REPLICAS_TEMPLATE.format(
+        deployment=args.deployment_name,
+        namespace=args.namespace,
+    )
+    desired_q = DESIRED_REPLICAS_TEMPLATE.format(
+        deployment=args.deployment_name,
+        namespace=args.namespace,
+    )
+    available_q = AVAILABLE_REPLICAS_TEMPLATE.format(
         deployment=args.deployment_name,
         namespace=args.namespace,
     )
@@ -143,7 +159,9 @@ def main() -> None:
             "num_requests_waiting",
             "avg_generation_throughput_toks_per_s",
             "kv_cache_usage_perc",
+            "desired_replicas",
             "ready_replicas",
+            "available_replicas",
         ])
 
         print(
@@ -161,7 +179,9 @@ def main() -> None:
                         "num_requests_waiting": num_requests_waiting_q,
                         "avg_generation_throughput_toks_per_s": generation_throughput_q,
                         "kv_cache_usage_perc": kv_cache_usage_q,
+                        "desired_replicas": desired_q,
                         "ready_replicas": ready_q,
+                        "available_replicas": available_q,
                     },
                 },
                 indent=2,
@@ -178,7 +198,9 @@ def main() -> None:
                 "num_requests_waiting": prom_query_first(args.prom_url, num_requests_waiting_q),
                 "avg_generation_throughput_toks_per_s": prom_query_first(args.prom_url, generation_throughput_q),
                 "kv_cache_usage_perc": prom_query_first(args.prom_url, kv_cache_usage_q),
+                "desired_replicas": prom_query(args.prom_url, desired_q),
                 "ready_replicas": prom_query(args.prom_url, ready_q),
+                "available_replicas": prom_query(args.prom_url, available_q),
             }
             write_row(writer, row)
             f.flush()

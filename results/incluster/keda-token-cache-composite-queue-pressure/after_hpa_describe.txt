@@ -1,0 +1,39 @@
+Name:                                         qwen25-05b-instruct-keda-token-cache-composite-hpa
+Namespace:                                    llm-demo
+Labels:                                       app.kubernetes.io/managed-by=keda-operator
+                                              app.kubernetes.io/name=qwen25-05b-instruct-keda-token-cache-composite-hpa
+                                              app.kubernetes.io/part-of=qwen25-05b-instruct-keda-token-cache-composite
+                                              app.kubernetes.io/version=2.19.0
+                                              scaledobject.keda.sh/name=qwen25-05b-instruct-keda-token-cache-composite
+Annotations:                                  <none>
+CreationTimestamp:                            Mon, 13 Apr 2026 23:04:46 -0500
+Reference:                                    Deployment/qwen25-0-5b-instruct-kserve
+Metrics:                                      ( current / target )
+  "composite-metric" (target average value):  1348m / 6
+Min replicas:                                 1
+Max replicas:                                 6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 2    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 60 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 100  Period: 15 seconds
+Deployment pods:       6 current / 6 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from external metric composite-metric(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-cache-composite,},MatchExpressions:[]LabelSelectorRequirement{},})
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  6m52s  horizontal-pod-autoscaler  New size: 2; reason: external metric composite-metric(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-cache-composite,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
+  Normal  SuccessfulRescale  5m37s  horizontal-pod-autoscaler  New size: 4; reason: external metric composite-metric(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-cache-composite,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
+  Normal  SuccessfulRescale  3m9s   horizontal-pod-autoscaler  New size: 6; reason: external metric composite-metric(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-cache-composite,},MatchExpressions:[]LabelSelectorRequirement{},}) above target

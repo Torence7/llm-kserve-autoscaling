@@ -4,7 +4,7 @@
   "target": "http://qwen25-0-5b-instruct-kserve-workload-svc.llm-demo.svc.cluster.local:8000/v1",
   "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
   "duration_seconds": 240,
-  "drain_timeout_seconds": 30.0,
+  "drain_timeout_seconds": 120.0,
   "dataset_mode": "synthetic",
   "dataset_path": null,
   "dataset_rows": 0,
@@ -38,11 +38,11 @@
       "rps": 0.35
     }
   ],
-  "requests_launched": 258,
-  "requests_total_recorded": 147,
+  "requests_launched": 257,
+  "requests_total_recorded": 32,
   "requests_ok": 0,
-  "requests_failed": 147,
-  "requests_unfinished": 111,
+  "requests_failed": 32,
+  "requests_unfinished": 225,
   "task_exception_count": 0,
   "completion_rate": 0.0,
   "recorded_success_rate": 0.0,
@@ -62,21 +62,21 @@
     },
     "queue_build": {
       "launched": 112,
-      "recorded": 112,
+      "recorded": 26,
       "ok": 0,
-      "failed": 112,
-      "unfinished": 0,
+      "failed": 26,
+      "unfinished": 86,
       "completion_rate": 0.0,
       "recorded_success_rate": 0.0
     },
     "pressure_peak": {
-      "launched": 119,
-      "recorded": 29,
+      "launched": 118,
+      "recorded": 0,
       "ok": 0,
-      "failed": 29,
-      "unfinished": 90,
+      "failed": 0,
+      "unfinished": 118,
       "completion_rate": 0.0,
-      "recorded_success_rate": 0.0
+      "recorded_success_rate": null
     },
     "recovery": {
       "launched": 21,

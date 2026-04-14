@@ -96,6 +96,8 @@ load_policy_config() {
   PROMETHEUS_QUERY="$(yaml_get_or_default '.prometheus.query' "$POLICY_FILE" "")"
   THRESHOLD="$(yaml_get_or_default '.prometheus.threshold' "$POLICY_FILE" "")"
   ACTIVATION_THRESHOLD="$(yaml_get_or_default '.prometheus.activation_threshold' "$POLICY_FILE" "")"
+  PROMETHEUS_TIMEOUT="$(yaml_get_or_default '.prometheus.timeout' "$POLICY_FILE" "")"
+  PROMETHEUS_IGNORE_NULL_VALUES="$(yaml_get_or_default '.prometheus.ignore_null_values' "$POLICY_FILE" "")"
 
   SCALING_MODIFIER_TARGET="$(yaml_get_or_default '.advanced.scaling_modifiers.target' "$POLICY_FILE" "")"
   SCALING_MODIFIER_ACTIVATION_TARGET="$(yaml_get_or_default '.advanced.scaling_modifiers.activation_target' "$POLICY_FILE" "")"

@@ -150,6 +150,28 @@ spec:
   maxReplicaCount: ${MAX_REPLICAS}
   pollingInterval: ${POLLING_INTERVAL}
   cooldownPeriod: ${COOLDOWN_PERIOD}
+  advanced:
+    restoreToOriginalReplicaCount: true
+    horizontalPodAutoscalerConfig:
+      name: ${KEDA_SCALEDOBJECT_NAME}-hpa
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          selectPolicy: Max
+          policies:
+            - type: Pods
+              value: 2
+              periodSeconds: 15
+            - type: Percent
+              value: 100
+              periodSeconds: 15
+        scaleDown:
+          stabilizationWindowSeconds: 60
+          selectPolicy: Max
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 15
   triggers:
 $(render_prometheus_trigger \
   "${PROMETHEUS_METRIC_NAME}" \
@@ -217,6 +239,27 @@ spec:
   pollingInterval: ${POLLING_INTERVAL}
   cooldownPeriod: ${COOLDOWN_PERIOD}
   advanced:
+    restoreToOriginalReplicaCount: true
+    horizontalPodAutoscalerConfig:
+      name: ${KEDA_SCALEDOBJECT_NAME}-hpa
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          selectPolicy: Max
+          policies:
+            - type: Pods
+              value: 2
+              periodSeconds: 15
+            - type: Percent
+              value: 100
+              periodSeconds: 15
+        scaleDown:
+          stabilizationWindowSeconds: 60
+          selectPolicy: Max
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 15
     scalingModifiers:
       formula: "${SCALING_MODIFIER_FORMULA}"
       target: "${SCALING_MODIFIER_TARGET}"
