@@ -130,6 +130,11 @@ log "Namespace: ${NAMESPACE}"
 log "Target endpoint: ${TARGET}"
 log "Results dir: ${run_dir}"
 
+log "Cleaning up any previous autoscaler before reset..."
+kubectl delete hpa -n "${NAMESPACE}" "${DEPLOYMENT_NAME}" --ignore-not-found >/dev/null 2>&1 || true
+kubectl delete scaledobject -n "${NAMESPACE}" -l "ml-autoscaler-target=${DEPLOYMENT_NAME}" --ignore-not-found >/dev/null 2>&1 || true
+kubectl delete pod -n "${NAMESPACE}" -l app=ml-autoscaler,ml-autoscaler-target="${DEPLOYMENT_NAME}" --ignore-not-found >/dev/null 2>&1 || true
+
 log "Resetting deployment replicas to START_REPLICAS=${START_REPLICAS} before applying policy..."
 kubectl scale deploy "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --replicas="${START_REPLICAS}"
 kubectl rollout status deploy "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --timeout=180s
@@ -161,10 +166,13 @@ case "${POLICY_TYPE}" in
 esac
 
 echo "Waiting for deployment to be fully ready..."
-kubectl rollout status deployment/qwen25-0-5b-instruct-kserve -n llm-demo --timeout=600s
+kubectl rollout status deploy "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --timeout=600s
 
-kubectl wait pod -n llm-demo \
+# Wait only for Running pods (terminating pods from a previous scale-down will
+# never become Ready and would cause a timeout).
+kubectl wait pod -n "${NAMESPACE}" \
   -l app.kubernetes.io/name=qwen25-0-5b-instruct,kserve.io/component=workload \
+  --field-selector=status.phase=Running \
   --for=condition=Ready \
   --timeout=600s
 
