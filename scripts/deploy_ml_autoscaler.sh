@@ -58,6 +58,7 @@ fi
 PROM_URL="$(yaml_get_or_default '.prometheus.server_address' "$POLICY_FILE" \
   "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090")"
 log "Deploying controller pod ${CONTROLLER_NAME}..."
+kubectl delete pod "${CONTROLLER_NAME}" -n "$NAMESPACE" --ignore-not-found >/dev/null 2>&1 || true
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: ServiceAccount
@@ -110,7 +111,7 @@ spec:
           apt-get update &&
           apt-get install --yes --no-install-recommends ca-certificates curl &&
           KUBECTL_VERSION="$(curl -L -s https://dl.k8s.io/release/stable.txt)" &&
-          curl -L --fail --output /usr/local/bin/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" &&
+          curl -L --fail --output /usr/local/bin/kubectl "https://dl.k8s.io/release/\${KUBECTL_VERSION}/bin/linux/amd64/kubectl" &&
           chmod +x /usr/local/bin/kubectl &&
           pip install --quiet scikit-learn joblib numpy requests &&
           python /app/controller.py \
