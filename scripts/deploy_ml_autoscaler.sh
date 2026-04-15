@@ -107,6 +107,11 @@ spec:
         - bash
         - -c
         - |
+          apt-get update &&
+          apt-get install --yes --no-install-recommends ca-certificates curl &&
+          KUBECTL_VERSION="$(curl -L -s https://dl.k8s.io/release/stable.txt)" &&
+          curl -L --fail --output /usr/local/bin/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" &&
+          chmod +x /usr/local/bin/kubectl &&
           pip install --quiet scikit-learn joblib numpy requests &&
           python /app/controller.py \
             --model-path /model/ml_autoscaler.joblib \
