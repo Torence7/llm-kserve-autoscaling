@@ -85,6 +85,26 @@ This port-forwards the selected model’s workload service to the local port spe
 
 Keep this running in its own terminal.
 
+### Persistent port-forward (survives SSH disconnects)
+
+Use `--detach` to run the port-forward as a background process that persists across SSH sessions:
+
+```bash
+bash scripts/portforward_model.sh --model qwen25-0.5b-instruct --detach
+```
+
+This runs `kubectl port-forward` under `nohup`, writing output to `/tmp/portforward_<model>.log` and the PID to `/tmp/portforward_<model>.pid`. Re-running with `--detach` automatically kills any existing port-forward for that model first.
+
+To stop the background port-forward:
+```bash
+kill $(cat /tmp/portforward_qwen25_05b_instruct.pid)
+```
+
+To check its logs:
+```bash
+tail -f /tmp/portforward_qwen25_05b_instruct.log
+```
+
 ## Quick Tests
 ### Smoke testing
 
@@ -217,3 +237,121 @@ run the same generic scripts with --model <new-model>
 
 
 
+<<<<<<< Updated upstream
+=======
+### Prerequisites
+
+Make sure these are already running:
+
+- the model is deployed
+- the model endpoint is port-forwarded locally
+- Prometheus is installed
+- Prometheus is port-forwarded locally
+- the Python virtual environment is activated
+
+Example:
+
+```bash
+source .venv/bin/activate
+bash scripts/portforward_model.sh --model qwen25-0.5b-instruct
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090
+```
+
+Keep both port-forwards running in separate terminals while the benchmark is executing.
+
+### Run one policy evaluation
+
+Example HPA CPU baseline run:
+
+```bash
+source .venv/bin/activate
+PROM_URL="http://localhost:9090" \
+bash scripts/benchmark/run_policy_eval.sh \
+  --model qwen25-0.5b-instruct \
+  --policy hpa-cpu-baseline \
+  --scenario short-bursts
+```
+
+Example KEDA run:
+
+```bash
+source .venv/bin/activate
+PROM_URL="http://localhost:9090" \
+bash scripts/benchmark/run_policy_eval.sh \
+  --model qwen25-0.5b-instruct \
+  --policy keda-waiting-requests \
+  --scenario short-bursts
+```
+
+### ShareGPT-style realistic dataset workflow
+
+If you want realistic prompts from ShareGPT-style traces:
+
+1. Prepare benchmark JSONL prompts (`{"prompt":"..."}`) from a ShareGPT JSON/JSONL export:
+
+```bash
+python scripts/benchmark/prepare_sharegpt_dataset.py \
+  --input /path/to/sharegpt.json \
+  --output configs/data/sharegpt_prompts_5k.jsonl \
+  --max-samples 5000 \
+  --min-prompt-tokens 16 \
+  --max-prompt-tokens 256
+```
+
+2. Run policy eval with the provided scenario:
+
+```bash
+PROM_URL="http://localhost:9090" \
+MAX_IN_FLIGHT=50 \
+DRAIN_TIMEOUT_SECONDS=180 \
+BENCH_TIMEOUT_SECONDS=120 \
+bash scripts/benchmark/run_policy_eval.sh \
+  --model qwen25-0.5b-instruct \
+  --policy hpa-cpu-baseline \
+  --scenario conversation-sharegpt
+```
+
+> **Note on `MAX_IN_FLIGHT`:** The default is 4, which causes ~70% of requests to be cancelled due to semaphore backpressure at 1+ RPS on CPU vLLM (where inference takes 30–80s). Set `MAX_IN_FLIGHT=50` for 1 RPS scenarios and `MAX_IN_FLIGHT=60` for 1.5 RPS scenarios to achieve >90% completion rates.
+
+Notebook version of this workflow:
+
+```bash
+jupyter notebook notebooks/benchmark_workflow.ipynb
+```
+
+### Compare multiple policies on the same scenario
+
+Run the same scenario with different policies to compare behavior under identical load:
+
+```bash
+source .venv/bin/activate
+
+PROM_URL="http://localhost:9090" \
+bash scripts/benchmark/run_policy_eval.sh \
+  --model qwen25-0.5b-instruct \
+  --policy hpa-cpu-baseline \
+  --scenario short-bursts
+
+PROM_URL="http://localhost:9090" \
+bash scripts/benchmark/run_policy_eval.sh \
+  --model qwen25-0.5b-instruct \
+  --policy keda-waiting-requests \
+  --scenario short-bursts
+```
+
+### Outputs
+
+Each run writes a timestamped results directory containing benchmark outputs and sampled system metrics.
+
+Typical artifacts include:
+- a benchmark summary
+- per-request logs
+- sampled system metrics such as running requests, waiting requests, throughput, KV-cache usage, and ready replicas
+
+### Notes
+
+- `PROM_URL` should point to the local Prometheus port-forward used during the run.
+- use the same model and scenario across policies for fair comparisons
+- make sure the selected policy is successfully applied before starting the benchmark
+- keep Prometheus and model port-forwards active in separate terminals during the run
+>>>>>>> Stashed changes
