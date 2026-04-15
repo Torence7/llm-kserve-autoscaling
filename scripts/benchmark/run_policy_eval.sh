@@ -162,11 +162,21 @@ esac
 
 echo "Waiting for deployment to be fully ready..."
 kubectl rollout status deployment/qwen25-0-5b-instruct-kserve -n llm-demo --timeout=600s
+
 kubectl wait pod -n llm-demo \
-  -l app=qwen25-0-5b-instruct-kserve \
+  -l app.kubernetes.io/name=qwen25-0-5b-instruct,kserve.io/component=workload \
   --for=condition=Ready \
   --timeout=600s
-echo "Pod ready, starting benchmark..."
+
+echo "Waiting for vLLM endpoint to respond..."
+for i in $(seq 1 60); do
+  if curl -sf http://localhost:8002/v1/models > /dev/null 2>&1; then
+    echo "Endpoint ready after ~$((i*10))s."
+    break
+  fi
+  echo "  [$i/60] Not ready yet, retrying in 10s..."
+  sleep 10
+done
 
 log "Starting Prometheus metric collection..."
 python -u "${REPO_ROOT}/scripts/metrics/collect_metrics.py" \
