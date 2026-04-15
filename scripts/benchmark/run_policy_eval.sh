@@ -160,8 +160,13 @@ case "${POLICY_TYPE}" in
     ;;
 esac
 
-log "Waiting ${POLICY_SETTLE_SECONDS}s for policy to settle..."
-sleep "${POLICY_SETTLE_SECONDS}"
+echo "Waiting for deployment to be fully ready..."
+kubectl rollout status deployment/qwen25-0-5b-instruct-kserve -n llm-demo --timeout=600s
+kubectl wait pod -n llm-demo \
+  -l app=qwen25-0-5b-instruct-kserve \
+  --for=condition=Ready \
+  --timeout=600s
+echo "Pod ready, starting benchmark..."
 
 log "Starting Prometheus metric collection..."
 python -u "${REPO_ROOT}/scripts/metrics/collect_metrics.py" \
