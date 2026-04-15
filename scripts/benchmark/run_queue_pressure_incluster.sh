@@ -21,6 +21,8 @@ PROM_URL="${PROM_URL:-http://localhost:9090}"
 PROM_NS="${PROM_NS:-monitoring}"
 PROM_SVC="${PROM_SVC:-prometheus-kube-prometheus-prometheus}"
 
+REPO_ROOT="${REPO_ROOT:-$PWD}"
+
 POLICIES=(
   "hpa-cpu-baseline"
   "keda-token-aware"
@@ -43,6 +45,40 @@ ensure_prereqs() {
   command -v python >/dev/null
   test -f scripts/metrics/collect_metrics.py
   test -f scripts/benchmark/run_benchmark.py
+}
+
+ensure_bench_pod_ready() {
+  if ! kubectl get pod "${POD}" -n "${NS}" >/dev/null 2>&1; then
+    log "bench pod ${POD} not found in ${NS}"
+    exit 1
+  fi
+
+  local phase
+  phase="$(kubectl get pod "${POD}" -n "${NS}" -o jsonpath='{.status.phase}')"
+
+  if [[ "${phase}" != "Running" ]]; then
+    log "bench pod ${POD} is in phase ${phase}, not Running"
+    kubectl get pod "${POD}" -n "${NS}" -o wide || true
+    exit 1
+  fi
+
+  kubectl exec -n "${NS}" "${POD}" -- python --version >/dev/null
+}
+
+sync_repo_to_bench_pod() {
+  log "Syncing repo into ${POD}:/work"
+  kubectl exec -n "${NS}" "${POD}" -- rm -rf /work
+  kubectl exec -n "${NS}" "${POD}" -- mkdir -p /work
+  kubectl cp "${REPO_ROOT}/." "${NS}/${POD}:/work"
+
+  kubectl exec -n "${NS}" "${POD}" -- bash -lc "
+set -e
+test -f /work/scripts/benchmark/run_benchmark.py
+test -f /work/${SCENARIO}
+python /work/scripts/benchmark/run_benchmark.py --help >/dev/null
+echo 'Scenario inside pod:'
+sed -n '1,80p' /work/${SCENARIO}
+"
 }
 
 start_prometheus_port_forward() {
@@ -222,7 +258,7 @@ run_one_policy() {
   sleep 10
 
   log "Running benchmark for ${run_name}"
-  kubectl -n "${NS}" exec "${POD}" -- bash -lc "
+  if ! kubectl -n "${NS}" exec "${POD}" -- bash -lc "
 cd /work
 mkdir -p '${pod_dir}'
 PYTHONPATH=. python scripts/benchmark/run_benchmark.py \
@@ -233,7 +269,12 @@ PYTHONPATH=. python scripts/benchmark/run_benchmark.py \
   --max-in-flight ${MAX_IN_FLIGHT} \
   --timeout-seconds ${TIMEOUT_SECONDS} \
   --drain-timeout-seconds ${DRAIN_TIMEOUT_SECONDS}
-"
+"; then
+    log "Benchmark exec failed; stopping metrics collector"
+    kill "${collector_pid}" >/dev/null 2>&1 || true
+    wait "${collector_pid}" 2>/dev/null || true
+    exit 1
+  fi
 
   log "Copying benchmark results for ${run_name}"
   kubectl -n "${NS}" cp "${POD}:${pod_dir}/." "${benchmark_dir}"
@@ -251,6 +292,8 @@ PYTHONPATH=. python scripts/benchmark/run_benchmark.py \
 
 main() {
   ensure_prereqs
+  ensure_bench_pod_ready
+  sync_repo_to_bench_pod
   start_prometheus_port_forward
   apply_monitoring
 

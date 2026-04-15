@@ -21,14 +21,14 @@
       "duration_seconds": 90,
       "arrival_pattern": "constant",
       "mean_rps": null,
-      "rps": 0.2
+      "rps": 0.3
     },
     {
       "name": "pressure_peak",
       "duration_seconds": 60,
       "arrival_pattern": "constant",
       "mean_rps": null,
-      "rps": 0.3
+      "rps": 0.45
     },
     {
       "name": "recovery",
@@ -38,18 +38,18 @@
       "rps": 0.1
     }
   ],
-  "requests_launched": 44,
-  "requests_total_recorded": 44,
-  "requests_ok": 44,
+  "requests_launched": 62,
+  "requests_total_recorded": 62,
+  "requests_ok": 62,
   "requests_failed": 0,
   "requests_unfinished": 0,
   "task_exception_count": 0,
   "completion_rate": 1.0,
   "recorded_success_rate": 1.0,
-  "latency_p50_ms": 20658.81609916687,
-  "latency_p95_ms": 30069.558489322662,
-  "ttft_p50_ms": 2748.5899925231934,
-  "ttft_p95_ms": 4073.325753211975,
+  "latency_p50_ms": 21301.392793655396,
+  "latency_p95_ms": 30475.62913894653,
+  "ttft_p50_ms": 2752.5936365127563,
+  "ttft_p95_ms": 5794.194316864014,
   "per_phase": {
     "warmup": {
       "launched": 2,
@@ -61,18 +61,18 @@
       "recorded_success_rate": 1.0
     },
     "queue_build": {
-      "launched": 18,
-      "recorded": 18,
-      "ok": 18,
+      "launched": 27,
+      "recorded": 27,
+      "ok": 27,
       "failed": 0,
       "unfinished": 0,
       "completion_rate": 1.0,
       "recorded_success_rate": 1.0
     },
     "pressure_peak": {
-      "launched": 18,
-      "recorded": 18,
-      "ok": 18,
+      "launched": 27,
+      "recorded": 27,
+      "ok": 27,
       "failed": 0,
       "unfinished": 0,
       "completion_rate": 1.0,

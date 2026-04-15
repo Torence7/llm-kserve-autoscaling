@@ -5,12 +5,12 @@ Annotations:  <none>
 API Version:  keda.sh/v1alpha1
 Kind:         ScaledObject
 Metadata:
-  Creation Timestamp:  2026-04-15T03:11:51Z
+  Creation Timestamp:  2026-04-15T04:03:36Z
   Finalizers:
     finalizer.keda.sh
   Generation:        1
-  Resource Version:  1593278
-  UID:               2abea875-7887-4f18-a316-2363571008c5
+  Resource Version:  1606277
+  UID:               b6cec05b-3ccb-43a8-9f49-1cd6543f74a5
 Spec:
   Advanced:
     Horizontal Pod Autoscaler Config:
@@ -115,7 +115,7 @@ Status:
     s0-prometheus
     s1-prometheus
   Hpa Name:                qwen25-05b-instruct-keda-token-cache-composite-hpa
-  Original Replica Count:  2
+  Original Replica Count:  5
   Scale Target GVKR:
     Group:            apps
     Kind:             Deployment

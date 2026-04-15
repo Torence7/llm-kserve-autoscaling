@@ -2,7 +2,7 @@ Name:                                                  qwen25-0-5b-instruct-kser
 Namespace:                                             llm-demo
 Labels:                                                <none>
 Annotations:                                           <none>
-CreationTimestamp:                                     Tue, 14 Apr 2026 21:47:21 -0500
+CreationTimestamp:                                     Tue, 14 Apr 2026 22:39:05 -0500
 Reference:                                             Deployment/qwen25-0-5b-instruct-kserve
 Metrics:                                               ( current / target )
   resource cpu on pods  (as a percentage of request):  <unknown> / 50%

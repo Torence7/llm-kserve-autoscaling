@@ -1,11 +1,11 @@
 # timestamp
-Tue Apr 14 09:47:22 PM CDT 2026
+Tue Apr 14 10:39:07 PM CDT 2026
 
 # scaledobjects
 
 # hpa
 NAME                          REFERENCE                                TARGETS              MINPODS   MAXPODS   REPLICAS   AGE
-qwen25-0-5b-instruct-kserve   Deployment/qwen25-0-5b-instruct-kserve   cpu: <unknown>/50%   1         5         0          1s
+qwen25-0-5b-instruct-kserve   Deployment/qwen25-0-5b-instruct-kserve   cpu: <unknown>/50%   1         5         0          2s
 
 # deployment
 NAME                          READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                             SELECTOR
@@ -13,7 +13,7 @@ qwen25-0-5b-instruct-kserve   1/1     1            1           4d12h   main     
 
 # pods
 NAME                                                            READY   STATUS        RESTARTS   AGE     IP            NODE                   NOMINATED NODE   READINESS GATES
-bench-client                                                    1/1     Running       0          6h13m   10.244.0.54   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-665bf8f748-2pj9n                    0/1     Terminating   0          8s      10.244.0.81   kserve-control-plane   <none>           <none>
+bench-client                                                    1/1     Running       0          7h5m    10.244.0.54   kserve-control-plane   <none>           <none>
 qwen25-0-5b-instruct-kserve-665bf8f748-9fbpq                    1/1     Running       0          4d12h   10.244.0.18   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-router-scheduler-669cb584c9-cmfdz   1/1     Running       0          90m     10.244.0.80   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-qqfw8                    0/1     Terminating   0          8s      10.244.0.94   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-router-scheduler-76b9f7d8fb-9mlnl   1/1     Running       0          23m     10.244.0.93   kserve-control-plane   <none>           <none>
