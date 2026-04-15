@@ -1,5 +1,5 @@
 # timestamp
-Tue Apr 14 08:04:06 PM CDT 2026
+Tue Apr 14 09:59:37 PM CDT 2026
 
 # scaledobjects
 NAME                                   SCALETARGETKIND      SCALETARGETNAME               MIN   MAX   READY   ACTIVE   FALLBACK   PAUSED   TRIGGERS     AUTHENTICATIONS   AGE
@@ -7,15 +7,15 @@ qwen25-05b-instruct-keda-token-aware   apps/v1.Deployment   qwen25-0-5b-instruct
 
 # hpa
 NAME                                       REFERENCE                                TARGETS             MINPODS   MAXPODS   REPLICAS   AGE
-qwen25-05b-instruct-keda-token-aware-hpa   Deployment/qwen25-0-5b-instruct-kserve   <unknown>/6 (avg)   1         6         0          2s
+qwen25-05b-instruct-keda-token-aware-hpa   Deployment/qwen25-0-5b-instruct-kserve   <unknown>/6 (avg)   1         6         0          3s
 
 # deployment
 NAME                          READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                             SELECTOR
-qwen25-0-5b-instruct-kserve   1/1     1            1           4d10h   main         quay.io/pierdipi/vllm-cpu:latest   app.kubernetes.io/component=llminferenceservice-workload,app.kubernetes.io/name=qwen25-0-5b-instruct,app.kubernetes.io/part-of=llminferenceservice,kserve.io/component=workload,llm-d.ai/role=both
+qwen25-0-5b-instruct-kserve   1/1     1            1           4d12h   main         quay.io/pierdipi/vllm-cpu:latest   app.kubernetes.io/component=llminferenceservice-workload,app.kubernetes.io/name=qwen25-0-5b-instruct,app.kubernetes.io/part-of=llminferenceservice,kserve.io/component=workload,llm-d.ai/role=both
 
 # pods
-NAME                                                           READY   STATUS        RESTARTS   AGE     IP            NODE                   NOMINATED NODE   READINESS GATES
-bench-client                                                   1/1     Running       0          4h30m   10.244.0.54   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-665bf8f748-9fbpq                   1/1     Running       0          4d10h   10.244.0.18   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-665bf8f748-lmt8x                   1/1     Terminating   0          11m     10.244.0.75   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-router-scheduler-55b6dc5c9-5nm69   1/1     Running       0          8m28s   10.244.0.77   kserve-control-plane   <none>           <none>
+NAME                                                            READY   STATUS        RESTARTS   AGE     IP            NODE                   NOMINATED NODE   READINESS GATES
+bench-client                                                    1/1     Running       0          6h26m   10.244.0.54   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-9fbpq                    1/1     Running       0          4d12h   10.244.0.18   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-qvc2p                    1/1     Terminating   0          10m     10.244.0.86   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-router-scheduler-7f8fdf7d7b-jw4fm   1/1     Running       0          9m25s   10.244.0.88   kserve-control-plane   <none>           <none>

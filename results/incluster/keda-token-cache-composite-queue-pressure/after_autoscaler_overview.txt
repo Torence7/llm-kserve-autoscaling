@@ -1,5 +1,5 @@
 # timestamp
-Tue Apr 14 08:28:31 PM CDT 2026
+Tue Apr 14 10:24:01 PM CDT 2026
 
 # scaledobjects
 NAME                                             SCALETARGETKIND      SCALETARGETNAME               MIN   MAX   READY   ACTIVE   FALLBACK   PAUSED   TRIGGERS     AUTHENTICATIONS   AGE
@@ -11,10 +11,10 @@ qwen25-05b-instruct-keda-token-cache-composite-hpa   Deployment/qwen25-0-5b-inst
 
 # deployment
 NAME                          READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                             SELECTOR
-qwen25-0-5b-instruct-kserve   1/1     1            1           4d10h   main         quay.io/pierdipi/vllm-cpu:latest   app.kubernetes.io/component=llminferenceservice-workload,app.kubernetes.io/name=qwen25-0-5b-instruct,app.kubernetes.io/part-of=llminferenceservice,kserve.io/component=workload,llm-d.ai/role=both
+qwen25-0-5b-instruct-kserve   1/1     1            1           4d12h   main         quay.io/pierdipi/vllm-cpu:latest   app.kubernetes.io/component=llminferenceservice-workload,app.kubernetes.io/name=qwen25-0-5b-instruct,app.kubernetes.io/part-of=llminferenceservice,kserve.io/component=workload,llm-d.ai/role=both
 
 # pods
 NAME                                                            READY   STATUS    RESTARTS   AGE     IP            NODE                   NOMINATED NODE   READINESS GATES
-bench-client                                                    1/1     Running   0          4h54m   10.244.0.54   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-665bf8f748-9fbpq                    1/1     Running   0          4d10h   10.244.0.18   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-router-scheduler-669cb584c9-cmfdz   1/1     Running   0          11m     10.244.0.80   kserve-control-plane   <none>           <none>
+bench-client                                                    1/1     Running   0          6h50m   10.244.0.54   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-9fbpq                    1/1     Running   0          4d12h   10.244.0.18   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-router-scheduler-76b9f7d8fb-9mlnl   1/1     Running   0          8m41s   10.244.0.93   kserve-control-plane   <none>           <none>

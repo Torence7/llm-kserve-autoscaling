@@ -5,12 +5,12 @@ Annotations:  <none>
 API Version:  keda.sh/v1alpha1
 Kind:         ScaledObject
 Metadata:
-  Creation Timestamp:  2026-04-15T01:04:03Z
+  Creation Timestamp:  2026-04-15T02:59:34Z
   Finalizers:
     finalizer.keda.sh
   Generation:        2
-  Resource Version:  1562416
-  UID:               c54dc4b3-b41f-49c3-83d6-3107e0db8830
+  Resource Version:  1590245
+  UID:               59d0621b-29da-4fec-8290-dd3d78880e13
 Spec:
   Advanced:
     Horizontal Pod Autoscaler Config:

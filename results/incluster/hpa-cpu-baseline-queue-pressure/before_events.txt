@@ -1,29 +1,14 @@
 LAST SEEN   TYPE      REASON                OBJECT                                                        MESSAGE
+10s         Normal    KEDAScalersStopped    scaledobject/qwen25-05b-instruct-keda-token-cache-composite   Stopped scalers watch
+10s         Normal    KEDAScalersStarted    scaledobject/qwen25-05b-instruct-keda-token-cache-composite   Scaler prometheus is built
+9s          Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve                        Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 1 to 2
+9s          Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-2pj9n              Container image "kserve/storage-initializer:v0.17.0" already present on machine
 9s          Warning   ScaledObjectDeleted   scaledobject/qwen25-05b-instruct-keda-token-cache-composite   ScaledObject was deleted
-9s          Normal    KEDAScalersStarted    scaledobject/qwen25-05b-instruct-keda-token-cache-composite   Scaler prometheus is built
-9s          Normal    KEDAScalersStopped    scaledobject/qwen25-05b-instruct-keda-token-cache-composite   Stopped scalers watch
-9s          Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve                        Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 2 to 5
-8s          Normal    Scheduled             pod/qwen25-0-5b-instruct-kserve-665bf8f748-bnddf              Successfully assigned llm-demo/qwen25-0-5b-instruct-kserve-665bf8f748-bnddf to kserve-control-plane
-8s          Normal    Scheduled             pod/qwen25-0-5b-instruct-kserve-665bf8f748-g4w58              Successfully assigned llm-demo/qwen25-0-5b-instruct-kserve-665bf8f748-g4w58 to kserve-control-plane
-8s          Normal    SuccessfulCreate      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748             Created pod: qwen25-0-5b-instruct-kserve-665bf8f748-g4w58
-8s          Normal    SuccessfulCreate      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748             Created pod: qwen25-0-5b-instruct-kserve-665bf8f748-46hb9
-8s          Normal    SuccessfulCreate      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748             Created pod: qwen25-0-5b-instruct-kserve-665bf8f748-bnddf
-8s          Normal    Scheduled             pod/qwen25-0-5b-instruct-kserve-665bf8f748-46hb9              Successfully assigned llm-demo/qwen25-0-5b-instruct-kserve-665bf8f748-46hb9 to kserve-control-plane
-7s          Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-bnddf              Started container storage-initializer
-7s          Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-g4w58              Container image "kserve/storage-initializer:v0.17.0" already present on machine
-7s          Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-g4w58              Created container: storage-initializer
-7s          Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-46hb9              Created container: storage-initializer
-7s          Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-46hb9              Container image "kserve/storage-initializer:v0.17.0" already present on machine
-7s          Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-bnddf              Created container: storage-initializer
-7s          Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-bnddf              Container image "kserve/storage-initializer:v0.17.0" already present on machine
-6s          Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-g4w58              Started container storage-initializer
-6s          Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-46hb9              Started container storage-initializer
-2s          Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve                        Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 5 to 1
-1s          Normal    Killing               pod/qwen25-0-5b-instruct-kserve-665bf8f748-g4w58              Stopping container storage-initializer
-1s          Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748             Deleted pod: qwen25-0-5b-instruct-kserve-665bf8f748-sdd7p
-1s          Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748             Deleted pod: qwen25-0-5b-instruct-kserve-665bf8f748-g4w58
-1s          Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748             Deleted pod: qwen25-0-5b-instruct-kserve-665bf8f748-bnddf
-1s          Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748             Deleted pod: qwen25-0-5b-instruct-kserve-665bf8f748-46hb9
-1s          Normal    Killing               pod/qwen25-0-5b-instruct-kserve-665bf8f748-sdd7p              Stopping container main
-1s          Normal    Killing               pod/qwen25-0-5b-instruct-kserve-665bf8f748-bnddf              Stopping container storage-initializer
-1s          Normal    Killing               pod/qwen25-0-5b-instruct-kserve-665bf8f748-46hb9              Stopping container storage-initializer
+9s          Normal    Scheduled             pod/qwen25-0-5b-instruct-kserve-665bf8f748-2pj9n              Successfully assigned llm-demo/qwen25-0-5b-instruct-kserve-665bf8f748-2pj9n to kserve-control-plane
+9s          Normal    SuccessfulCreate      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748             Created pod: qwen25-0-5b-instruct-kserve-665bf8f748-2pj9n
+9s          Warning   Error                 llminferenceservice/qwen25-0-5b-instruct                      Reconciliation failed: failed to reconcile workload: failed to reconcile single node workload: failed to reconcile main workload: failed to get defaults for v1.Deployment llm-demo/qwen25-0-5b-instruct-kserve: Operation cannot be fulfilled on deployments.apps "qwen25-0-5b-instruct-kserve": the object has been modified; please apply your changes to the latest version and try again
+8s          Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-2pj9n              Started container storage-initializer
+8s          Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-2pj9n              Created container: storage-initializer
+1s          Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve                        Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 2 to 1
+1s          Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748             Deleted pod: qwen25-0-5b-instruct-kserve-665bf8f748-2pj9n
+1s          Normal    Killing               pod/qwen25-0-5b-instruct-kserve-665bf8f748-2pj9n              Stopping container storage-initializer

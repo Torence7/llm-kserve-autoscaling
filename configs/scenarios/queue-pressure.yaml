@@ -1,5 +1,5 @@
 name: queue-pressure
-description: Queue-forming workload with enough headroom to observe scale-out.
+description: Moderately stressed queue-forming workload to separate autoscaling policies without collapsing the system.
 request_type: completions
 duration_seconds: 240
 
@@ -25,12 +25,12 @@ phases:
   - name: queue_build
     duration_seconds: 90
     arrival_pattern: constant
-    rps: 0.20
+    rps: 0.30
 
   - name: pressure_peak
     duration_seconds: 60
     arrival_pattern: constant
-    rps: 0.30
+    rps: 0.45
 
   - name: recovery
     duration_seconds: 60

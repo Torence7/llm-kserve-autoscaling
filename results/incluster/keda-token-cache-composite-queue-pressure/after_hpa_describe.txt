@@ -6,7 +6,7 @@ Labels:                                       app.kubernetes.io/managed-by=keda-
                                               app.kubernetes.io/version=2.19.0
                                               scaledobject.keda.sh/name=qwen25-05b-instruct-keda-token-cache-composite
 Annotations:                                  <none>
-CreationTimestamp:                            Tue, 14 Apr 2026 20:16:21 -0500
+CreationTimestamp:                            Tue, 14 Apr 2026 22:11:52 -0500
 Reference:                                    Deployment/qwen25-0-5b-instruct-kserve
 Metrics:                                      ( current / target )
   "composite-metric" (target average value):  0 / 6
@@ -31,4 +31,8 @@ Conditions:
   AbleToScale     True    ReadyForNewScale  recommended size matches current size
   ScalingActive   True    ValidMetricFound  the HPA was able to successfully calculate a replica count from external metric composite-metric(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-cache-composite,},MatchExpressions:[]LabelSelectorRequirement{},})
   ScalingLimited  True    TooFewReplicas    the desired replica count is less than the minimum replica count
-Events:           <none>
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  9m25s  horizontal-pod-autoscaler  New size: 2; reason: external metric composite-metric(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: qwen25-05b-instruct-keda-token-cache-composite,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
+  Normal  SuccessfulRescale  2m49s  horizontal-pod-autoscaler  New size: 1; reason: All metrics below target
