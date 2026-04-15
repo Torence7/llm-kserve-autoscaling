@@ -43,10 +43,18 @@ kubectl create configmap "${CONTROLLER_NAME}-code" \
   --from-file=features.py="${REPO_ROOT}/scripts/ml_autoscaler/features.py" \
   --from-file=__init__.py="${REPO_ROOT}/scripts/ml_autoscaler/__init__.py" \
   --dry-run=client -o yaml | kubectl apply -f -
-kubectl create configmap "${CONTROLLER_NAME}-model" \
-  -n "$NAMESPACE" \
-  --from-file=ml_autoscaler.joblib="$ML_MODEL_PATH" \
-  --dry-run=client -o yaml | kubectl apply -f -
+
+MODEL_CONFIGMAP_NAME="${CONTROLLER_NAME}-model"
+if kubectl get configmap "$MODEL_CONFIGMAP_NAME" -n "$NAMESPACE" >/dev/null 2>&1; then
+  kubectl create configmap "$MODEL_CONFIGMAP_NAME" \
+    -n "$NAMESPACE" \
+    --from-file=ml_autoscaler.joblib="$ML_MODEL_PATH" \
+    --dry-run=client -o yaml | kubectl replace -f -
+else
+  kubectl create configmap "$MODEL_CONFIGMAP_NAME" \
+    -n "$NAMESPACE" \
+    --from-file=ml_autoscaler.joblib="$ML_MODEL_PATH"
+fi
 PROM_URL="$(yaml_get_or_default '.prometheus.server_address' "$POLICY_FILE" \
   "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090")"
 log "Deploying controller pod ${CONTROLLER_NAME}..."
