@@ -112,7 +112,8 @@ def load_jsonl_dataset(path: str) -> List[Dict[str, Any]]:
             try:
                 rows.append(json.loads(line))
             except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid JSONL at {path}:{line_num}: {e}") from e
+                raise ValueError(
+                    f"Invalid JSONL at {path}:{line_num}: {e}") from e
     if not rows:
         raise ValueError(f"No rows found in dataset file: {path}")
     return rows
@@ -147,11 +148,13 @@ def dataset_prompt_from_row(row: Dict[str, Any], min_tokens: int, max_tokens: in
 
     instruction = row.get("instruction", "")
     context = row.get("context", row.get("input", ""))
-    merged = "\n\n".join([x for x in [instruction, context] if isinstance(x, str) and x.strip()])
+    merged = "\n\n".join([x for x in [instruction, context]
+                         if isinstance(x, str) and x.strip()])
     if merged.strip():
         return clamp_prompt_tokens(merged, min_tokens, max_tokens)
 
-    raise ValueError(f"Could not build prompt from dataset row keys: {list(row.keys())}")
+    raise ValueError(
+        f"Could not build prompt from dataset row keys: {list(row.keys())}")
 
 
 def dataset_chat_from_row(row: Dict[str, Any], min_tokens: int, max_tokens: int) -> List[Dict[str, str]]:
@@ -187,7 +190,8 @@ def build_prompt_from_scenario(
 
     if style == "plain":
         template_pool = prompt_cfg.get("template_pool")
-        template = random.choice(template_pool) if template_pool else prompt_cfg["template"]
+        template = random.choice(
+            template_pool) if template_pool else prompt_cfg["template"]
         prompt_text = clamp_prompt_tokens(
             template,
             prompt_cfg["min_tokens"],
@@ -223,7 +227,8 @@ def build_prompt_from_scenario(
 
     if style == "dataset_prompt":
         if not dataset_rows:
-            raise ValueError("prompt.style=dataset_prompt requires dataset.mode=jsonl and a loaded dataset")
+            raise ValueError(
+                "prompt.style=dataset_prompt requires dataset.mode=jsonl and a loaded dataset")
         row = random.choice(dataset_rows)
         return {
             "prompt": dataset_prompt_from_row(
@@ -235,7 +240,8 @@ def build_prompt_from_scenario(
 
     if style == "dataset_chat":
         if not dataset_rows:
-            raise ValueError("prompt.style=dataset_chat requires dataset.mode=jsonl and a loaded dataset")
+            raise ValueError(
+                "prompt.style=dataset_chat requires dataset.mode=jsonl and a loaded dataset")
         row = random.choice(dataset_rows)
         return {
             "messages": dataset_chat_from_row(
@@ -262,22 +268,26 @@ def build_phases(cfg: Dict[str, Any]) -> List[PhaseConfig]:
 
             name = str(phase.get("name", f"phase_{i}"))
             duration_seconds = int(phase["duration_seconds"])
-            arrival_pattern = str(phase.get("arrival_pattern", cfg.get("arrival_pattern", "")))
+            arrival_pattern = str(
+                phase.get("arrival_pattern", cfg.get("arrival_pattern", "")))
 
             if arrival_pattern not in {"poisson", "constant"}:
-                raise ValueError(f"Unsupported arrival pattern in phase {name}: {arrival_pattern}")
+                raise ValueError(
+                    f"Unsupported arrival pattern in phase {name}: {arrival_pattern}")
 
             mean_rps = None
             rps = None
             if arrival_pattern == "poisson":
                 raw_mean_rps = phase.get("mean_rps", cfg.get("mean_rps"))
                 if raw_mean_rps is None:
-                    raise ValueError(f"Phase {name} uses poisson but mean_rps is missing")
+                    raise ValueError(
+                        f"Phase {name} uses poisson but mean_rps is missing")
                 mean_rps = float(raw_mean_rps)
             else:
                 raw_rps = phase.get("rps", cfg.get("rps"))
                 if raw_rps is None:
-                    raise ValueError(f"Phase {name} uses constant but rps is missing")
+                    raise ValueError(
+                        f"Phase {name} uses constant but rps is missing")
                 rps = float(raw_rps)
 
             phases.append(
@@ -370,7 +380,7 @@ async def _read_sse_stream_and_measure(
             if not line.startswith("data:"):
                 continue
 
-            payload = line[len("data:") :].strip()
+            payload = line[len("data:"):].strip()
             if payload == "[DONE]":
                 continue
 
@@ -393,7 +403,7 @@ async def _read_sse_stream_and_measure(
         line = line.strip()
         if not line.startswith("data:"):
             continue
-        payload = line[len("data:") :].strip()
+        payload = line[len("data:"):].strip()
         if payload == "[DONE]":
             continue
         try:
@@ -425,7 +435,8 @@ async def send_one_request(
     max_tokens: int,
 ) -> RequestResult:
     req_id = random_id()
-    url = endpoint_base.rstrip("/") + ("/chat/completions" if request_type == "chat" else "/completions")
+    url = endpoint_base.rstrip(
+        "/") + ("/chat/completions" if request_type == "chat" else "/completions")
 
     if request_type == "chat":
         body = {
@@ -435,7 +446,8 @@ async def send_one_request(
             "stream": True,
             "temperature": 0.0,
         }
-        prompt_chars = sum(len(m["content"]) for m in payload_inputs["messages"])
+        prompt_chars = sum(len(m["content"])
+                           for m in payload_inputs["messages"])
     else:
         body = {
             "model": model_name,
@@ -601,7 +613,8 @@ async def benchmark_main(args: argparse.Namespace) -> None:
             while time.time() < phase_end:
                 rate = phase.mean_rps if phase.arrival_pattern == "poisson" else phase.rps
                 if rate is None:
-                    raise ValueError(f"Phase {phase.name} has no rate configured")
+                    raise ValueError(
+                        f"Phase {phase.name} has no rate configured")
 
                 if rate <= 0:
                     sleep_for = max(0.0, min(1.0, phase_end - time.time()))
@@ -609,7 +622,8 @@ async def benchmark_main(args: argparse.Namespace) -> None:
                         await asyncio.sleep(sleep_for)
                     continue
 
-                payload_inputs = build_prompt_from_scenario(scenario_cfg, dataset_rows=dataset_rows)
+                payload_inputs = build_prompt_from_scenario(
+                    scenario_cfg, dataset_rows=dataset_rows)
                 max_tokens = choose_max_tokens(scenario_cfg)
 
                 task = asyncio.create_task(
@@ -631,15 +645,18 @@ async def benchmark_main(args: argparse.Namespace) -> None:
                 launched_by_phase[phase.name] += 1
 
                 if launched % 5 == 0:
-                    print(f"Launched {launched} requests so far...", flush=True)
+                    print(
+                        f"Launched {launched} requests so far...", flush=True)
 
-                wait_s = poisson_wait(rate) if phase.arrival_pattern == "poisson" else constant_wait(rate)
+                wait_s = poisson_wait(
+                    rate) if phase.arrival_pattern == "poisson" else constant_wait(rate)
                 remaining = phase_end - time.time()
                 if remaining <= 0:
                     break
                 await asyncio.sleep(min(wait_s, remaining))
 
-        print(f"Launch phase done. Waiting up to {drain_timeout_s}s for {len(tasks)} tasks...", flush=True)
+        print(
+            f"Launch phase done. Waiting up to {drain_timeout_s}s for {len(tasks)} tasks...", flush=True)
         results, pending_count, task_exception_count = await drain_with_timeout(tasks, drain_timeout_s)
 
     requests_csv = outdir / "requests.csv"
@@ -709,8 +726,10 @@ async def benchmark_main(args: argparse.Namespace) -> None:
         recorded_phase = int(stats["recorded"])
         ok_phase = int(stats["ok"])
         stats["unfinished"] = max(0, launched_phase - recorded_phase)
-        stats["completion_rate"] = (ok_phase / launched_phase) if launched_phase > 0 else None
-        stats["recorded_success_rate"] = (ok_phase / recorded_phase) if recorded_phase > 0 else None
+        stats["completion_rate"] = (
+            ok_phase / launched_phase) if launched_phase > 0 else None
+        stats["recorded_success_rate"] = (
+            ok_phase / recorded_phase) if recorded_phase > 0 else None
 
     summary = {
         "scenario": scenario_name,
@@ -756,11 +775,15 @@ async def benchmark_main(args: argparse.Namespace) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Run a benchmark scenario against an OpenAI-compatible endpoint.")
-    p.add_argument("--target", required=True, help="Base target like http://localhost:8004/v1")
-    p.add_argument("--model-name", required=True, help="Served model name to send in request payload")
+    p = argparse.ArgumentParser(
+        description="Run a benchmark scenario against an OpenAI-compatible endpoint.")
+    p.add_argument("--target", required=True,
+                   help="Base target like http://localhost:8004/v1")
+    p.add_argument("--model-name", required=True,
+                   help="Served model name to send in request payload")
     p.add_argument("--scenario", required=True, help="Path to scenario YAML")
-    p.add_argument("--outdir", required=True, help="Directory to write results")
+    p.add_argument("--outdir", required=True,
+                   help="Directory to write results")
     p.add_argument("--timeout-seconds", type=float, default=60.0)
     p.add_argument("--max-in-flight", type=int, default=4)
     p.add_argument("--drain-timeout-seconds", type=float, default=10.0)

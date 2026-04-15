@@ -53,6 +53,14 @@ def extract_prompt(rec: Dict[str, Any]) -> Optional[str]:
     if isinstance(direct, str) and direct.strip():
         return direct.strip()
 
+    # Common instruction-tuning schema (e.g., Dolly-like records).
+    instruction = rec.get("instruction")
+    context = rec.get("context", rec.get("input"))
+    if isinstance(instruction, str) and instruction.strip():
+        if isinstance(context, str) and context.strip():
+            return f"{instruction.strip()}\n\n{context.strip()}"
+        return instruction.strip()
+
     conv = rec.get("conversations")
     if isinstance(conv, list):
         for turn in conv:
@@ -104,8 +112,10 @@ def filter_prompts(
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Prepare ShareGPT-style prompts for benchmark JSONL.")
-    ap.add_argument("--input", required=True, help="Path to ShareGPT JSON or JSONL file")
+    ap = argparse.ArgumentParser(
+        description="Prepare ShareGPT-style prompts for benchmark JSONL.")
+    ap.add_argument("--input", required=True,
+                    help="Path to ShareGPT JSON or JSONL file")
     ap.add_argument("--output", required=True, help="Output JSONL path")
     ap.add_argument("--min-prompt-tokens", type=int, default=16)
     ap.add_argument("--max-prompt-tokens", type=int, default=256)
