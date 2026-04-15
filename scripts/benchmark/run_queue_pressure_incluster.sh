@@ -23,11 +23,18 @@ PROM_SVC="${PROM_SVC:-prometheus-kube-prometheus-prometheus}"
 
 REPO_ROOT="${REPO_ROOT:-$PWD}"
 
-POLICIES=(
+DEFAULT_POLICIES=(
   "hpa-cpu-baseline"
   "keda-token-aware"
   "keda-token-cache-composite"
+  "keda-waiting-requests"
 )
+
+if [[ -n "${POLICY_LIST:-}" ]]; then
+  read -r -a POLICIES <<< "${POLICY_LIST}"
+else
+  POLICIES=("${DEFAULT_POLICIES[@]}")
+fi
 
 log() {
   echo "[$(date +%H:%M:%S)] $*"

@@ -1,0 +1,24 @@
+# timestamp
+Wed Apr 15 01:20:43 PM CDT 2026
+
+# scaledobjects
+NAME                                        SCALETARGETKIND      SCALETARGETNAME               MIN   MAX   READY   ACTIVE    FALLBACK   PAUSED   TRIGGERS     AUTHENTICATIONS   AGE
+qwen25-05b-instruct-keda-waiting-requests   apps/v1.Deployment   qwen25-0-5b-instruct-kserve   1     6     True    Unknown   False      False    prometheus                     3s
+
+# hpa
+NAME                                            REFERENCE                                TARGETS             MINPODS   MAXPODS   REPLICAS   AGE
+qwen25-05b-instruct-keda-waiting-requests-hpa   Deployment/qwen25-0-5b-instruct-kserve   <unknown>/1 (avg)   1         6         0          3s
+
+# deployment
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE    CONTAINERS   IMAGES                             SELECTOR
+qwen25-0-5b-instruct-kserve   1/1     1            1           5d3h   main         quay.io/pierdipi/vllm-cpu:latest   app.kubernetes.io/component=llminferenceservice-workload,app.kubernetes.io/name=qwen25-0-5b-instruct,app.kubernetes.io/part-of=llminferenceservice,kserve.io/component=workload,llm-d.ai/role=both
+
+# pods
+NAME                                                           READY   STATUS        RESTARTS   AGE    IP             NODE                   NOMINATED NODE   READINESS GATES
+bench-client                                                   1/1     Running       0          82s    10.244.0.106   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-6tqrs                   0/1     Terminating   0          9s     10.244.0.110   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-9fbpq                   1/1     Running       0          5d3h   10.244.0.18    kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-rvjrg                   0/1     Terminating   0          10s    10.244.0.107   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-vdjwt                   0/1     Terminating   0          10s    10.244.0.109   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-wbpgg                   0/1     Terminating   0          10s    10.244.0.108   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-router-scheduler-7d6f479db-zsj2k   1/1     Running       0          14h    10.244.0.105   kserve-control-plane   <none>           <none>
