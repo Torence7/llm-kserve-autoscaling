@@ -1,0 +1,119 @@
+Name:         qwen25-05b-instruct-keda-token-aware
+Namespace:    llm-demo
+Labels:       scaledobject.keda.sh/name=qwen25-05b-instruct-keda-token-aware
+Annotations:  <none>
+API Version:  keda.sh/v1alpha1
+Kind:         ScaledObject
+Metadata:
+  Creation Timestamp:  2026-04-14T20:47:34Z
+  Finalizers:
+    finalizer.keda.sh
+  Generation:        2
+  Resource Version:  1503031
+  UID:               11106cb9-66f3-495a-a5dd-6dd78f7f6a70
+Spec:
+  Advanced:
+    Horizontal Pod Autoscaler Config:
+      Behavior:
+        Scale Down:
+          Policies:
+            Period Seconds:              30
+            Type:                        Percent
+            Value:                       50
+          Select Policy:                 Max
+          Stabilization Window Seconds:  300
+        Scale Up:
+          Policies:
+            Period Seconds:              15
+            Type:                        Pods
+            Value:                       2
+            Period Seconds:              15
+            Type:                        Percent
+            Value:                       100
+          Select Policy:                 Max
+          Stabilization Window Seconds:  0
+      Name:                              qwen25-05b-instruct-keda-token-aware-hpa
+    Restore To Original Replica Count:   true
+    Scaling Modifiers:
+  Cooldown Period:    60
+  Max Replica Count:  6
+  Min Replica Count:  2
+  Polling Interval:   5
+  Scale Target Ref:
+    Name:  qwen25-0-5b-instruct-kserve
+  Triggers:
+    Metadata:
+      Activation Threshold:  1
+      Ignore Null Values:    false
+      Metric Name:           vllm_token_pressure
+      Query:                 (
+  0.25 *
+  sum(
+    vllm:num_requests_running{namespace="llm-demo"}
+  )
+)
++
+(
+  2.0 *
+  sum(
+    vllm:num_requests_waiting{namespace="llm-demo"}
+  )
+)
++
+(
+  0.10 *
+  sum(
+    rate(vllm:prompt_tokens_total{namespace="llm-demo"}[1m])
+  )
+)
++
+(
+  0.05 *
+  sum(
+    rate(vllm:generation_tokens_total{namespace="llm-demo"}[1m])
+  )
+)
+
+      Server Address:  http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+      Threshold:       6
+      Timeout:         10s
+    Name:              vllm_token_pressure
+    Type:              prometheus
+Status:
+  Authentications Types:  
+  Conditions:
+    Message:  ScaledObject is defined correctly and is ready for scaling
+    Reason:   ScaledObjectReady
+    Status:   True
+    Type:     Ready
+    Message:  Scaling is not performed because triggers are not active
+    Reason:   ScalerNotActive
+    Status:   False
+    Type:     Active
+    Message:  No fallbacks are active on this scaled object
+    Reason:   NoFallbackFound
+    Status:   False
+    Type:     Fallback
+    Status:   False
+    Type:     Paused
+  External Metric Names:
+    s0-prometheus
+  Hpa Name:                qwen25-05b-instruct-keda-token-aware-hpa
+  Last Active Time:        2026-04-14T20:53:34Z
+  Original Replica Count:  5
+  Scale Target GVKR:
+    Group:            apps
+    Kind:             Deployment
+    Resource:         deployments
+    Version:          v1
+  Scale Target Kind:  apps/v1.Deployment
+  Triggers Activity:
+    s0-prometheus:
+      Is Active:   false
+  Triggers Types:  prometheus
+Events:
+  Type    Reason              Age                From           Message
+  ----    ------              ----               ----           -------
+  Normal  KEDAScalersStarted  12m                keda-operator  Scaler prometheus is built
+  Normal  KEDAScalersStarted  12m                keda-operator  Started scalers watch
+  Normal  ScaledObjectReady   12m (x2 over 12m)  keda-operator  ScaledObject is ready for scaling

@@ -6,11 +6,11 @@ Labels:                                       app.kubernetes.io/managed-by=keda-
                                               app.kubernetes.io/version=2.19.0
                                               scaledobject.keda.sh/name=qwen25-05b-instruct-keda-token-cache-composite
 Annotations:                                  <none>
-CreationTimestamp:                            Tue, 14 Apr 2026 15:59:51 -0500
+CreationTimestamp:                            Tue, 14 Apr 2026 20:16:21 -0500
 Reference:                                    Deployment/qwen25-0-5b-instruct-kserve
 Metrics:                                      ( current / target )
   "composite-metric" (target average value):  0 / 6
-Min replicas:                                 2
+Min replicas:                                 1
 Max replicas:                                 6
 Behavior:
   Scale Up:
@@ -24,7 +24,7 @@ Behavior:
     Select Policy: Max
     Policies:
       - Type: Percent  Value: 50  Period: 30 seconds
-Deployment pods:       2 current / 2 desired
+Deployment pods:       1 current / 1 desired
 Conditions:
   Type            Status  Reason            Message
   ----            ------  ------            -------

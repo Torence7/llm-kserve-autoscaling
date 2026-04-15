@@ -1,22 +1,19 @@
 # timestamp
-Tue Apr 14 03:47:26 PM CDT 2026
+Tue Apr 14 08:03:55 PM CDT 2026
 
 # scaledobjects
 
 # hpa
 NAME                          REFERENCE                                TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
-qwen25-0-5b-instruct-kserve   Deployment/qwen25-0-5b-instruct-kserve   cpu: 21%/50%   1         5         5          12m
+qwen25-0-5b-instruct-kserve   Deployment/qwen25-0-5b-instruct-kserve   cpu: 21%/50%   1         5         2          12m
 
 # deployment
-NAME                          READY   UP-TO-DATE   AVAILABLE   AGE    CONTAINERS   IMAGES                             SELECTOR
-qwen25-0-5b-instruct-kserve   5/5     5            5           4d6h   main         quay.io/pierdipi/vllm-cpu:latest   app.kubernetes.io/component=llminferenceservice-workload,app.kubernetes.io/name=qwen25-0-5b-instruct,app.kubernetes.io/part-of=llminferenceservice,kserve.io/component=workload,llm-d.ai/role=both
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                             SELECTOR
+qwen25-0-5b-instruct-kserve   2/2     2            2           4d10h   main         quay.io/pierdipi/vllm-cpu:latest   app.kubernetes.io/component=llminferenceservice-workload,app.kubernetes.io/name=qwen25-0-5b-instruct,app.kubernetes.io/part-of=llminferenceservice,kserve.io/component=workload,llm-d.ai/role=both
 
 # pods
 NAME                                                           READY   STATUS    RESTARTS   AGE     IP            NODE                   NOMINATED NODE   READINESS GATES
-bench-client                                                   1/1     Running   0          13m     10.244.0.54   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-665bf8f748-8gxbh                   1/1     Running   0          11m     10.244.0.59   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-665bf8f748-8th27                   1/1     Running   0          11m     10.244.0.58   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-665bf8f748-9fbpq                   1/1     Running   0          4d6h    10.244.0.18   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-665bf8f748-v9rnc                   1/1     Running   0          11m     10.244.0.56   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-665bf8f748-zrfpw                   1/1     Running   0          11m     10.244.0.55   kserve-control-plane   <none>           <none>
-qwen25-0-5b-instruct-kserve-router-scheduler-f9df5cc58-k9dvv   1/1     Running   0          9m38s   10.244.0.60   kserve-control-plane   <none>           <none>
+bench-client                                                   1/1     Running   0          4h30m   10.244.0.54   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-9fbpq                   1/1     Running   0          4d10h   10.244.0.18   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-lmt8x                   1/1     Running   0          10m     10.244.0.75   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-router-scheduler-55b6dc5c9-5nm69   1/1     Running   0          8m17s   10.244.0.77   kserve-control-plane   <none>           <none>

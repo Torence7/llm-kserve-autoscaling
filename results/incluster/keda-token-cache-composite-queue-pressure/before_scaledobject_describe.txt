@@ -5,12 +5,12 @@ Annotations:  <none>
 API Version:  keda.sh/v1alpha1
 Kind:         ScaledObject
 Metadata:
-  Creation Timestamp:  2026-04-14T20:59:50Z
+  Creation Timestamp:  2026-04-15T01:16:20Z
   Finalizers:
     finalizer.keda.sh
   Generation:        1
-  Resource Version:  1504560
-  UID:               f8167dea-6e4e-481c-b9b6-30162e085c91
+  Resource Version:  1565452
+  UID:               5698970b-9fb4-458a-a253-e7c1a9120ff7
 Spec:
   Advanced:
     Horizontal Pod Autoscaler Config:
@@ -40,7 +40,7 @@ Spec:
       Target:             6
   Cooldown Period:        60
   Max Replica Count:      6
-  Min Replica Count:      2
+  Min Replica Count:      1
   Polling Interval:       5
   Scale Target Ref:
     Name:  qwen25-0-5b-instruct-kserve
@@ -103,9 +103,7 @@ Status:
     Reason:   ScaledObjectReady
     Status:   True
     Type:     Ready
-    Message:  Scaling is not performed because triggers are not active
-    Reason:   ScalerNotActive
-    Status:   False
+    Status:   Unknown
     Type:     Active
     Message:  No fallbacks are active on this scaled object
     Reason:   NoFallbackFound
@@ -117,7 +115,7 @@ Status:
     s0-prometheus
     s1-prometheus
   Hpa Name:                qwen25-05b-instruct-keda-token-cache-composite-hpa
-  Original Replica Count:  5
+  Original Replica Count:  2
   Scale Target GVKR:
     Group:            apps
     Kind:             Deployment
@@ -135,4 +133,4 @@ Events:
   ----    ------              ----             ----           -------
   Normal  KEDAScalersStarted  4s (x2 over 4s)  keda-operator  Scaler prometheus is built
   Normal  KEDAScalersStarted  4s               keda-operator  Started scalers watch
-  Normal  ScaledObjectReady   4s (x2 over 4s)  keda-operator  ScaledObject is ready for scaling
+  Normal  ScaledObjectReady   4s               keda-operator  ScaledObject is ready for scaling

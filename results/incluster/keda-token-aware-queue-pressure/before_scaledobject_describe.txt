@@ -5,12 +5,12 @@ Annotations:  <none>
 API Version:  keda.sh/v1alpha1
 Kind:         ScaledObject
 Metadata:
-  Creation Timestamp:  2026-04-14T20:47:34Z
+  Creation Timestamp:  2026-04-15T01:04:03Z
   Finalizers:
     finalizer.keda.sh
   Generation:        2
-  Resource Version:  1501335
-  UID:               11106cb9-66f3-495a-a5dd-6dd78f7f6a70
+  Resource Version:  1562416
+  UID:               c54dc4b3-b41f-49c3-83d6-3107e0db8830
 Spec:
   Advanced:
     Horizontal Pod Autoscaler Config:
@@ -37,7 +37,7 @@ Spec:
     Scaling Modifiers:
   Cooldown Period:    60
   Max Replica Count:  6
-  Min Replica Count:  2
+  Min Replica Count:  1
   Polling Interval:   5
   Scale Target Ref:
     Name:  qwen25-0-5b-instruct-kserve
@@ -99,7 +99,7 @@ Status:
   External Metric Names:
     s0-prometheus
   Hpa Name:                qwen25-05b-instruct-keda-token-aware-hpa
-  Original Replica Count:  5
+  Original Replica Count:  2
   Scale Target GVKR:
     Group:            apps
     Kind:             Deployment
@@ -113,6 +113,6 @@ Status:
 Events:
   Type    Reason              Age              From           Message
   ----    ------              ----             ----           -------
-  Normal  KEDAScalersStarted  4s               keda-operator  Scaler prometheus is built
-  Normal  KEDAScalersStarted  4s               keda-operator  Started scalers watch
-  Normal  ScaledObjectReady   3s (x2 over 4s)  keda-operator  ScaledObject is ready for scaling
+  Normal  KEDAScalersStarted  3s               keda-operator  Scaler prometheus is built
+  Normal  KEDAScalersStarted  3s               keda-operator  Started scalers watch
+  Normal  ScaledObjectReady   3s (x2 over 3s)  keda-operator  ScaledObject is ready for scaling

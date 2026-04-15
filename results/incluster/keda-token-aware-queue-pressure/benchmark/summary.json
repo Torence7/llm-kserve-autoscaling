@@ -46,10 +46,10 @@
   "task_exception_count": 0,
   "completion_rate": 1.0,
   "recorded_success_rate": 1.0,
-  "latency_p50_ms": 26001.921772956848,
-  "latency_p95_ms": 35891.848850250244,
-  "ttft_p50_ms": 2748.8242387771606,
-  "ttft_p95_ms": 4386.981189250946,
+  "latency_p50_ms": 22657.933831214905,
+  "latency_p95_ms": 31914.408028125763,
+  "ttft_p50_ms": 2698.5520124435425,
+  "ttft_p95_ms": 3935.1556062698364,
   "per_phase": {
     "warmup": {
       "launched": 2,

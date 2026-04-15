@@ -99,9 +99,7 @@ Conditions:
 OldReplicaSets:  qwen25-0-5b-instruct-kserve-7f9cfb5bf7 (0/0 replicas created)
 NewReplicaSet:   qwen25-0-5b-instruct-kserve-665bf8f748 (1/1 replicas created)
 Events:
-  Type    Reason             Age                From                   Message
-  ----    ------             ----               ----                   -------
-  Normal  ScalingReplicaSet  31m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-7f9cfb5bf7 from 0 to 1
-  Normal  ScalingReplicaSet  30m                deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-7f9cfb5bf7 from 1 to 0
-  Normal  ScalingReplicaSet  30m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 2 to 5
-  Normal  ScalingReplicaSet  30m (x2 over 70m)  deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 5 to 1
+  Type    Reason             Age   From                   Message
+  ----    ------             ----  ----                   -------
+  Normal  ScalingReplicaSet  9s    deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 2 to 5
+  Normal  ScalingReplicaSet  2s    deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 5 to 1

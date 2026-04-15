@@ -2,17 +2,11 @@ Name:                                                  qwen25-0-5b-instruct-kser
 Namespace:                                             llm-demo
 Labels:                                                <none>
 Annotations:                                           <none>
-CreationTimestamp:                                     Tue, 14 Apr 2026 15:35:21 -0500
+CreationTimestamp:                                     Tue, 14 Apr 2026 19:51:50 -0500
 Reference:                                             Deployment/qwen25-0-5b-instruct-kserve
 Metrics:                                               ( current / target )
-  resource cpu on pods  (as a percentage of request):  22% (226m) / 50%
+  resource cpu on pods  (as a percentage of request):  <unknown> / 50%
 Min replicas:                                          1
 Max replicas:                                          5
-Deployment pods:                                       1 current / 1 desired
-Conditions:
-  Type            Status  Reason              Message
-  ----            ------  ------              -------
-  AbleToScale     True    ReadyForNewScale    recommended size matches current size
-  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
-  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
-Events:           <none>
+Deployment pods:                                       0 current / 0 desired
+Events:                                                <none>

@@ -1,7 +1,7 @@
 policy_key: keda-token-cache-composite
 policy_type: keda-composite
 
-min_replicas: 2
+min_replicas: 1
 max_replicas: 6
 polling_interval: 5
 cooldown_period: 60
