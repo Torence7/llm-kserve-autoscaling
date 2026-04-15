@@ -117,6 +117,7 @@ PY
       --duration-seconds "${metric_duration_seconds}" \
       --interval-seconds "${METRIC_INTERVAL}" \
       --deployment-name "${DEPLOYMENT_NAME}" \
+      --model-name "${SERVED_MODEL_NAME}" \
       --namespace "${NAMESPACE}" \
       --outcsv "${run_dir}/system_metrics.csv" &
     METRICS_PID=$!
