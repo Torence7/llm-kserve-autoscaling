@@ -266,6 +266,19 @@ def main() -> None:
             predicted = max(effective_min_replicas, min(
                 effective_max_replicas, predicted))
 
+        # Reactive guard: if latency is high or queue is building, don't let
+        # the model suppress the prior's scale-up signal.
+        queue = norm.get("queue_depth", 0.0)
+        ttft = norm.get("p95_ttft_ms", 0.0)
+        itl = norm.get("p95_itl_ms", 0.0)
+        latency_pressure = (
+            (queue > 2.0)
+            or (ttft > 2000.0 and norm.get("output_tokens_per_sec", 0.0) > 0)
+            or (itl > 150.0 and norm.get("output_tokens_per_sec", 0.0) > 0)
+        )
+        if latency_pressure and predicted < prior:
+            predicted = prior
+
         now = time.time()
         in_cooldown = (now - last_scale_time) < args.cooldown
         should_scale = predicted != current_target and not in_cooldown
@@ -276,6 +289,7 @@ def main() -> None:
             "little_law_prior": prior,
             "predicted_residual": residual_pred,
             "predicted_replicas": predicted,
+            "latency_pressure": latency_pressure,
             "current_target": current_target,
             "in_cooldown": in_cooldown,
             "action": "scale" if should_scale else "hold",

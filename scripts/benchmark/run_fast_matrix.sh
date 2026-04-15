@@ -17,7 +17,7 @@ Examples:
   bash scripts/benchmark/run_fast_matrix.sh --model configs/models/qwen25-0.5b-instruct.yaml
 
 Optional environment variables:
-  POLICY_LIST="hpa-cpu-baseline keda-waiting-requests keda-token-cache-composite"
+  POLICY_LIST="hpa-cpu-baseline keda-waiting-requests keda-token-cache-composite ml-autoscaler"
   SCENARIO_LIST="short-bursts conversation-sharegpt"
   REPEATS=1
   ROBUST_DATASET=0
@@ -57,7 +57,7 @@ BENCH_TIMEOUT_SET="${BENCH_TIMEOUT_SECONDS+x}"
 DRAIN_TIMEOUT_SET="${DRAIN_TIMEOUT_SECONDS+x}"
 POLICY_SETTLE_SET="${POLICY_SETTLE_SECONDS+x}"
 
-POLICY_LIST="${POLICY_LIST:-hpa-cpu-baseline keda-waiting-requests keda-token-cache-composite}"
+POLICY_LIST="${POLICY_LIST:-hpa-cpu-baseline keda-waiting-requests keda-token-cache-composite ml-autoscaler}"
 # Default to one synthetic bursty scenario + one ShareGPT-style realistic scenario.
 SCENARIO_LIST="${SCENARIO_LIST:-short-bursts conversation-sharegpt}"
 REPEATS="${REPEATS:-1}"
@@ -69,7 +69,7 @@ DRAIN_TIMEOUT_SECONDS="${DRAIN_TIMEOUT_SECONDS:-120}"
 POLICY_SETTLE_SECONDS="${POLICY_SETTLE_SECONDS:-15}"
 
 if [[ "${ROBUST_DATASET}" == "1" ]]; then
-  [[ -n "${POLICY_LIST_SET}" ]] || POLICY_LIST="hpa-cpu-baseline keda-waiting-requests keda-token-aware keda-token-cache-composite"
+  [[ -n "${POLICY_LIST_SET}" ]] || POLICY_LIST="hpa-cpu-baseline keda-waiting-requests keda-token-aware keda-token-cache-composite ml-autoscaler"
   [[ -n "${SCENARIO_LIST_SET}" ]] || SCENARIO_LIST="short-bursts conversation-sharegpt"
   [[ -n "${REPEATS_SET}" ]] || REPEATS="2"
   [[ -n "${MAX_IN_FLIGHT_SET}" ]] || MAX_IN_FLIGHT="4"
