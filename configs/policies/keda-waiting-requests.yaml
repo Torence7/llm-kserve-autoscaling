@@ -2,9 +2,9 @@ policy_key: keda-waiting-requests
 policy_type: keda-prometheus
 
 min_replicas: 1
-max_replicas: 5
+max_replicas: 6
 polling_interval: 5
-cooldown_period: 30
+cooldown_period: 45
 
 prometheus:
   server_address: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
@@ -16,4 +16,6 @@ prometheus:
       }
     )
   threshold: "1"
-  activation_threshold: "1"
+  activation_threshold: "0"
+  timeout: "10s"
+  ignore_null_values: "false"

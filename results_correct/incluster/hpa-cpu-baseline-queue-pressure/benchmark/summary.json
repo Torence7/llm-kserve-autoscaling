@@ -1,0 +1,91 @@
+{
+  "scenario": "queue-pressure",
+  "request_type": "completions",
+  "target": "http://qwen25-0-5b-instruct-kserve-workload-svc.llm-demo.svc.cluster.local:8000/v1",
+  "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
+  "duration_seconds": 240,
+  "drain_timeout_seconds": 600.0,
+  "dataset_mode": "synthetic",
+  "dataset_path": null,
+  "dataset_rows": 0,
+  "phases": [
+    {
+      "name": "warmup",
+      "duration_seconds": 30,
+      "arrival_pattern": "constant",
+      "mean_rps": null,
+      "rps": 0.05
+    },
+    {
+      "name": "queue_build",
+      "duration_seconds": 90,
+      "arrival_pattern": "constant",
+      "mean_rps": null,
+      "rps": 0.3
+    },
+    {
+      "name": "pressure_peak",
+      "duration_seconds": 60,
+      "arrival_pattern": "constant",
+      "mean_rps": null,
+      "rps": 0.45
+    },
+    {
+      "name": "recovery",
+      "duration_seconds": 60,
+      "arrival_pattern": "constant",
+      "mean_rps": null,
+      "rps": 0.1
+    }
+  ],
+  "requests_launched": 62,
+  "requests_total_recorded": 62,
+  "requests_ok": 62,
+  "requests_failed": 0,
+  "requests_unfinished": 0,
+  "task_exception_count": 0,
+  "completion_rate": 1.0,
+  "recorded_success_rate": 1.0,
+  "latency_p50_ms": 30546.63050174713,
+  "latency_p95_ms": 52561.861205101006,
+  "ttft_p50_ms": 3240.652084350586,
+  "ttft_p95_ms": 7806.8541407585135,
+  "per_phase": {
+    "warmup": {
+      "launched": 2,
+      "recorded": 2,
+      "ok": 2,
+      "failed": 0,
+      "unfinished": 0,
+      "completion_rate": 1.0,
+      "recorded_success_rate": 1.0
+    },
+    "queue_build": {
+      "launched": 27,
+      "recorded": 27,
+      "ok": 27,
+      "failed": 0,
+      "unfinished": 0,
+      "completion_rate": 1.0,
+      "recorded_success_rate": 1.0
+    },
+    "pressure_peak": {
+      "launched": 27,
+      "recorded": 27,
+      "ok": 27,
+      "failed": 0,
+      "unfinished": 0,
+      "completion_rate": 1.0,
+      "recorded_success_rate": 1.0
+    },
+    "recovery": {
+      "launched": 6,
+      "recorded": 6,
+      "ok": 6,
+      "failed": 0,
+      "unfinished": 0,
+      "completion_rate": 1.0,
+      "recorded_success_rate": 1.0
+    }
+  }
+}

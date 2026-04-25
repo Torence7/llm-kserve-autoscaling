@@ -1,0 +1,28 @@
+Name:                                      qwen25-05b-instruct-keda-token-aware-hpa
+Namespace:                                 llm-demo
+Labels:                                    app.kubernetes.io/managed-by=keda-operator
+                                           app.kubernetes.io/name=qwen25-05b-instruct-keda-token-aware-hpa
+                                           app.kubernetes.io/part-of=qwen25-05b-instruct-keda-token-aware
+                                           app.kubernetes.io/version=2.19.0
+                                           scaledobject.keda.sh/name=qwen25-05b-instruct-keda-token-aware
+Annotations:                               <none>
+CreationTimestamp:                         Tue, 14 Apr 2026 22:51:20 -0500
+Reference:                                 Deployment/qwen25-0-5b-instruct-kserve
+Metrics:                                   ( current / target )
+  "s0-prometheus" (target average value):  <unknown> / 6
+Min replicas:                              1
+Max replicas:                              6
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 2    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 300 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Percent  Value: 50  Period: 30 seconds
+Deployment pods:       0 current / 0 desired
+Events:                <none>

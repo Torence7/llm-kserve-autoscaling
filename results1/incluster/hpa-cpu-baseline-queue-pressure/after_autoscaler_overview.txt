@@ -1,0 +1,22 @@
+# timestamp
+Tue Apr 14 10:00:05 AM CDT 2026
+
+# scaledobjects
+
+# hpa
+NAME                          REFERENCE                                TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+qwen25-0-5b-instruct-kserve   Deployment/qwen25-0-5b-instruct-kserve   cpu: 22%/50%   1         5         5          10m
+
+# deployment
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                             SELECTOR
+qwen25-0-5b-instruct-kserve   1/5     5            1           4d    main         quay.io/pierdipi/vllm-cpu:latest   app.kubernetes.io/component=llminferenceservice-workload,app.kubernetes.io/name=qwen25-0-5b-instruct,app.kubernetes.io/part-of=llminferenceservice,kserve.io/component=workload,llm-d.ai/role=both
+
+# pods
+NAME                                                            READY   STATUS                  RESTARTS       AGE     IP             NODE                   NOMINATED NODE   READINESS GATES
+bench-client                                                    1/1     Running                 0              19h     10.244.0.74    kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-9fbpq                    1/1     Running                 0              4d      10.244.0.18    kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-bfwg7                    0/1     Init:CrashLoopBackOff   6 (91s ago)    9m1s    10.244.0.221   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-dvfzw                    0/1     Init:CrashLoopBackOff   6 (2m1s ago)   9m16s   10.244.0.220   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-g9xhc                    0/1     Init:CrashLoopBackOff   6 (2m3s ago)   9m16s   10.244.0.218   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-gfpzr                    0/1     Init:CrashLoopBackOff   6 (92s ago)    9m16s   10.244.0.219   kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-router-scheduler-66844f8bf4-sjbtd   1/1     Running                 0              7m21s   10.244.0.223   kserve-control-plane   <none>           <none>

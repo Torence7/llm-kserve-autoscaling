@@ -108,6 +108,8 @@ render_prometheus_trigger() {
   local query="$3"
   local threshold="$4"
   local activation_threshold="${5:-}"
+  local timeout="${6:-}"
+  local ignore_null_values="${7:-}"
 
   cat <<EOF
   - type: prometheus
@@ -123,6 +125,18 @@ EOF
   if [[ -n "$activation_threshold" ]]; then
     cat <<EOF
       activationThreshold: "${activation_threshold}"
+EOF
+  fi
+
+  if [[ -n "$timeout" ]]; then
+    cat <<EOF
+      timeout: "${timeout}"
+EOF
+  fi
+
+  if [[ -n "$ignore_null_values" ]]; then
+    cat <<EOF
+      ignoreNullValues: "${ignore_null_values}"
 EOF
   fi
 }
@@ -150,13 +164,37 @@ spec:
   maxReplicaCount: ${MAX_REPLICAS}
   pollingInterval: ${POLLING_INTERVAL}
   cooldownPeriod: ${COOLDOWN_PERIOD}
+  advanced:
+    restoreToOriginalReplicaCount: true
+    horizontalPodAutoscalerConfig:
+      name: ${KEDA_SCALEDOBJECT_NAME}-hpa
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          selectPolicy: Max
+          policies:
+            - type: Pods
+              value: 2
+              periodSeconds: 15
+            - type: Percent
+              value: 100
+              periodSeconds: 15
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          selectPolicy: Max
+          policies:
+            - type: Percent
+              value: 50
+              periodSeconds: 30
   triggers:
 $(render_prometheus_trigger \
   "${PROMETHEUS_METRIC_NAME}" \
   "${PROMETHEUS_METRIC_NAME}" \
   "${PROMETHEUS_QUERY}" \
   "${THRESHOLD}" \
-  "${ACTIVATION_THRESHOLD}")
+  "${ACTIVATION_THRESHOLD}" \
+  "${PROMETHEUS_TIMEOUT}" \
+  "${PROMETHEUS_IGNORE_NULL_VALUES}")
 EOF
 
   echo "Generated ScaledObject YAML:"
@@ -194,7 +232,9 @@ apply_composite_scaledobject() {
         "$metric_name" \
         "$query" \
         "$threshold" \
-        "$activation_threshold"
+        "$activation_threshold" \
+        "$PROMETHEUS_TIMEOUT" \
+        "$PROMETHEUS_IGNORE_NULL_VALUES"
     )"$'\n'
   done
 
@@ -217,6 +257,27 @@ spec:
   pollingInterval: ${POLLING_INTERVAL}
   cooldownPeriod: ${COOLDOWN_PERIOD}
   advanced:
+    restoreToOriginalReplicaCount: true
+    horizontalPodAutoscalerConfig:
+      name: ${KEDA_SCALEDOBJECT_NAME}-hpa
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          selectPolicy: Max
+          policies:
+            - type: Pods
+              value: 2
+              periodSeconds: 15
+            - type: Percent
+              value: 100
+              periodSeconds: 15
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          selectPolicy: Max
+          policies:
+            - type: Percent
+              value: 50
+              periodSeconds: 30
     scalingModifiers:
       formula: "${SCALING_MODIFIER_FORMULA}"
       target: "${SCALING_MODIFIER_TARGET}"

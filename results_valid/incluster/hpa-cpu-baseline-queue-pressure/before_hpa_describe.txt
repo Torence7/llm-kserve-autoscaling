@@ -1,0 +1,12 @@
+Name:                                                  qwen25-0-5b-instruct-kserve
+Namespace:                                             llm-demo
+Labels:                                                <none>
+Annotations:                                           <none>
+CreationTimestamp:                                     Tue, 14 Apr 2026 19:51:50 -0500
+Reference:                                             Deployment/qwen25-0-5b-instruct-kserve
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  <unknown> / 50%
+Min replicas:                                          1
+Max replicas:                                          5
+Deployment pods:                                       0 current / 0 desired
+Events:                                                <none>

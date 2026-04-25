@@ -1,0 +1,128 @@
+Name:                   qwen25-0-5b-instruct-kserve
+Namespace:              llm-demo
+CreationTimestamp:      Fri, 10 Apr 2026 09:46:06 -0500
+Labels:                 app.kubernetes.io/component=llminferenceservice-workload
+                        app.kubernetes.io/name=qwen25-0-5b-instruct
+                        app.kubernetes.io/part-of=llminferenceservice
+                        kserve.io/component=workload
+                        llm-d.ai/role=both
+Annotations:            deployment.kubernetes.io/revision: 5
+Selector:               app.kubernetes.io/component=llminferenceservice-workload,app.kubernetes.io/name=qwen25-0-5b-instruct,app.kubernetes.io/part-of=llminferenceservice,kserve.io/component=workload,llm-d.ai/role=both
+Replicas:               2 desired | 2 updated | 2 total | 1 available | 1 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  app.kubernetes.io/component=llminferenceservice-workload
+           app.kubernetes.io/name=qwen25-0-5b-instruct
+           app.kubernetes.io/part-of=llminferenceservice
+           kserve.io/component=workload
+           llm-d.ai/role=both
+  Init Containers:
+   storage-initializer:
+    Image:      kserve/storage-initializer:v0.17.0
+    Port:       <none>
+    Host Port:  <none>
+    Args:
+      hf://Qwen/Qwen2.5-0.5B-Instruct
+      /mnt/models
+    Limits:
+      cpu:     1
+      memory:  1Gi
+    Requests:
+      cpu:        100m
+      memory:     100Mi
+    Environment:  <none>
+    Mounts:
+      /mnt/models from kserve-provision-location (rw)
+  Containers:
+   main:
+    Image:           quay.io/pierdipi/vllm-cpu:latest
+    Port:            8000/TCP
+    Host Port:       0/TCP
+    SeccompProfile:  RuntimeDefault
+    Command:
+      vllm
+      serve
+      /mnt/models
+      --served-model-name
+      Qwen/Qwen2.5-0.5B-Instruct
+      --port
+      8000
+    Limits:
+      cpu:     3
+      memory:  12Gi
+    Requests:
+      cpu:      1
+      memory:   6Gi
+    Liveness:   http-get http://:8000/health delay=0s timeout=10s period=10s #success=1 #failure=3
+    Readiness:  http-get http://:8000/health delay=0s timeout=5s period=10s #success=1 #failure=60
+    Startup:    http-get http://:8000/health delay=0s timeout=1s period=10s #success=1 #failure=60
+    Environment:
+      HOME:                /home
+      VLLM_LOGGING_LEVEL:  INFO
+      HF_HUB_CACHE:        /models
+    Mounts:
+      /dev/shm from dshm (rw)
+      /home from home (rw)
+      /mnt/models from kserve-provision-location (ro)
+      /models from model-cache (rw)
+      /var/run/kserve/tls from tls-certs (ro)
+  Volumes:
+   home:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     
+    SizeLimit:  <unset>
+   dshm:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     Memory
+    SizeLimit:  1Gi
+   model-cache:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     
+    SizeLimit:  <unset>
+   tls-certs:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  qwen25-0-5b-instruct-kserve-self-signed-certs
+    Optional:    false
+   kserve-provision-location:
+    Type:          EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:        
+    SizeLimit:     <unset>
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Progressing    True    NewReplicaSetAvailable
+  Available      False   MinimumReplicasUnavailable
+OldReplicaSets:  qwen25-0-5b-instruct-kserve-7f9cfb5bf7 (0/0 replicas created)
+NewReplicaSet:   qwen25-0-5b-instruct-kserve-665bf8f748 (2/2 replicas created)
+Events:
+  Type    Reason             Age                From                   Message
+  ----    ------             ----               ----                   -------
+  Normal  ScalingReplicaSet  31m (x2 over 35m)  deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-7f9cfb5bf7 from 0 to 1
+  Normal  ScalingReplicaSet  30m (x2 over 34m)  deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-7f9cfb5bf7 from 1 to 0
+  Normal  ScalingReplicaSet  30m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 2 to 5
+  Normal  ScalingReplicaSet  29m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 1 to 4
+  Normal  ScalingReplicaSet  29m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 4 to 5
+  Normal  ScalingReplicaSet  20m (x2 over 30m)  deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 5 to 1
+  Normal  ScalingReplicaSet  19m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 1 to 2
+  Normal  ScalingReplicaSet  19m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 2 to 4
+  Normal  ScalingReplicaSet  19m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 4 to 6
+  Normal  ScalingReplicaSet  16m                deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 6 to 1
+  Normal  ScalingReplicaSet  15m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 2 to 3
+  Normal  ScalingReplicaSet  14m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 3 to 5
+  Normal  ScalingReplicaSet  13m                deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 5 to 4
+  Normal  ScalingReplicaSet  12m                deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 4 to 3
+  Normal  ScalingReplicaSet  12m                deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 3 to 1
+  Normal  ScalingReplicaSet  11m (x2 over 15m)  deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 1 to 2
+  Normal  ScalingReplicaSet  10m                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 2 to 5
+  Normal  ScalingReplicaSet  10m                deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 5 to 1
+  Normal  ScalingReplicaSet  8m43s              deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 1 to 3
+  Normal  ScalingReplicaSet  6m5s               deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 3 to 1
+  Normal  ScalingReplicaSet  5m50s              deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 1 to 2
+  Normal  ScalingReplicaSet  5m5s               deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 2 to 3
+  Normal  ScalingReplicaSet  4m17s              deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 3 to 5
+  Normal  ScalingReplicaSet  71s                deployment-controller  Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 5 to 1
+  Normal  ScalingReplicaSet  41s                deployment-controller  Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 1 to 2

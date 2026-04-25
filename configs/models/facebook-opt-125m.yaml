@@ -28,7 +28,7 @@ service_monitor_name: facebook-opt-125m-vllm-monitor
 workload_label_name: facebook-opt-125m
 metrics_port: 8000
 metrics_path: /metrics
-metrics_scrape_interval: 15s
+metrics_scrape_interval: 5s
 
 smoke_test:
   prompt: "Who are you?"

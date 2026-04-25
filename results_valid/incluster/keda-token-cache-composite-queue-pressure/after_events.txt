@@ -1,0 +1,127 @@
+LAST SEEN   TYPE      REASON                OBJECT                                                               MESSAGE
+36m         Normal    KEDAScalersStarted    scaledobject/qwen25-05b-instruct-keda-token-cache-composite          Scaler prometheus is built
+36m         Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve                               Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 2 to 5
+36m         Normal    KEDAScalersStopped    scaledobject/qwen25-05b-instruct-keda-token-cache-composite          Stopped scalers watch
+36m         Warning   ScaledObjectDeleted   scaledobject/qwen25-05b-instruct-keda-token-cache-composite          ScaledObject was deleted
+36m         Normal    Scheduled             pod/qwen25-0-5b-instruct-kserve-665bf8f748-g4w58                     Successfully assigned llm-demo/qwen25-0-5b-instruct-kserve-665bf8f748-g4w58 to kserve-control-plane
+36m         Normal    Scheduled             pod/qwen25-0-5b-instruct-kserve-665bf8f748-bnddf                     Successfully assigned llm-demo/qwen25-0-5b-instruct-kserve-665bf8f748-bnddf to kserve-control-plane
+36m         Normal    SuccessfulCreate      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Created pod: qwen25-0-5b-instruct-kserve-665bf8f748-bnddf
+36m         Normal    Scheduled             pod/qwen25-0-5b-instruct-kserve-665bf8f748-46hb9                     Successfully assigned llm-demo/qwen25-0-5b-instruct-kserve-665bf8f748-46hb9 to kserve-control-plane
+36m         Normal    SuccessfulCreate      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Created pod: qwen25-0-5b-instruct-kserve-665bf8f748-46hb9
+36m         Normal    SuccessfulCreate      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Created pod: qwen25-0-5b-instruct-kserve-665bf8f748-g4w58
+36m         Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-bnddf                     Created container: storage-initializer
+36m         Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-bnddf                     Started container storage-initializer
+36m         Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-g4w58                     Created container: storage-initializer
+36m         Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-46hb9                     Container image "kserve/storage-initializer:v0.17.0" already present on machine
+36m         Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-g4w58                     Container image "kserve/storage-initializer:v0.17.0" already present on machine
+36m         Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-46hb9                     Created container: storage-initializer
+36m         Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-bnddf                     Container image "kserve/storage-initializer:v0.17.0" already present on machine
+36m         Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-g4w58                     Started container storage-initializer
+36m         Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-46hb9                     Started container storage-initializer
+36m         Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve                               Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 5 to 1
+36m         Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Deleted pod: qwen25-0-5b-instruct-kserve-665bf8f748-g4w58
+36m         Normal    Killing               pod/qwen25-0-5b-instruct-kserve-665bf8f748-bnddf                     Stopping container storage-initializer
+36m         Normal    Killing               pod/qwen25-0-5b-instruct-kserve-665bf8f748-46hb9                     Stopping container storage-initializer
+36m         Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Deleted pod: qwen25-0-5b-instruct-kserve-665bf8f748-46hb9
+36m         Normal    Killing               pod/qwen25-0-5b-instruct-kserve-665bf8f748-sdd7p                     Stopping container main
+36m         Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Deleted pod: qwen25-0-5b-instruct-kserve-665bf8f748-bnddf
+36m         Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Deleted pod: qwen25-0-5b-instruct-kserve-665bf8f748-sdd7p
+36m         Normal    Killing               pod/qwen25-0-5b-instruct-kserve-665bf8f748-g4w58                     Stopping container storage-initializer
+35m         Normal    Scheduled             pod/qwen25-0-5b-instruct-kserve-665bf8f748-z95kf                     Successfully assigned llm-demo/qwen25-0-5b-instruct-kserve-665bf8f748-z95kf to kserve-control-plane
+35m         Normal    SuccessfulCreate      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Created pod: qwen25-0-5b-instruct-kserve-665bf8f748-z95kf
+35m         Normal    SuccessfulCreate      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Created pod: qwen25-0-5b-instruct-kserve-665bf8f748-h8kcp
+35m         Normal    Scheduled             pod/qwen25-0-5b-instruct-kserve-665bf8f748-h8kcp                     Successfully assigned llm-demo/qwen25-0-5b-instruct-kserve-665bf8f748-h8kcp to kserve-control-plane
+35m         Normal    SuccessfulCreate      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Created pod: qwen25-0-5b-instruct-kserve-665bf8f748-lmt8x
+35m         Normal    Scheduled             pod/qwen25-0-5b-instruct-kserve-665bf8f748-lmt8x                     Successfully assigned llm-demo/qwen25-0-5b-instruct-kserve-665bf8f748-lmt8x to kserve-control-plane
+35m         Normal    SuccessfulRescale     horizontalpodautoscaler/qwen25-0-5b-instruct-kserve                  New size: 4; reason: cpu resource utilization (percentage of request) above target
+35m         Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve                               Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 1 to 4
+35m         Warning   Error                 llminferenceservice/qwen25-0-5b-instruct                             Reconciliation failed: failed to reconcile workload: failed to reconcile single node workload: failed to reconcile main workload: failed to get defaults for v1.Deployment llm-demo/qwen25-0-5b-instruct-kserve: Operation cannot be fulfilled on deployments.apps "qwen25-0-5b-instruct-kserve": the object has been modified; please apply your changes to the latest version and try again
+35m         Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-lmt8x                     Container image "kserve/storage-initializer:v0.17.0" already present on machine
+35m         Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-h8kcp                     Container image "kserve/storage-initializer:v0.17.0" already present on machine
+35m         Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-h8kcp                     Created container: storage-initializer
+35m         Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-h8kcp                     Started container storage-initializer
+35m         Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-lmt8x                     Created container: storage-initializer
+35m         Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-z95kf                     Created container: storage-initializer
+35m         Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-z95kf                     Container image "kserve/storage-initializer:v0.17.0" already present on machine
+35m         Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-z95kf                     Started container storage-initializer
+35m         Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-lmt8x                     Started container storage-initializer
+35m         Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve                               Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 4 to 5
+35m         Normal    SuccessfulRescale     horizontalpodautoscaler/qwen25-0-5b-instruct-kserve                  New size: 5; reason: cpu resource utilization (percentage of request) above target
+35m         Normal    SuccessfulCreate      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Created pod: qwen25-0-5b-instruct-kserve-665bf8f748-n5brr
+35m         Normal    Scheduled             pod/qwen25-0-5b-instruct-kserve-665bf8f748-n5brr                     Successfully assigned llm-demo/qwen25-0-5b-instruct-kserve-665bf8f748-n5brr to kserve-control-plane
+35m         Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-n5brr                     Container image "kserve/storage-initializer:v0.17.0" already present on machine
+35m         Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-n5brr                     Created container: storage-initializer
+35m         Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-n5brr                     Started container storage-initializer
+34m         Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-z95kf                     Container image "quay.io/pierdipi/vllm-cpu:latest" already present on machine
+34m         Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-lmt8x                     Container image "quay.io/pierdipi/vllm-cpu:latest" already present on machine
+34m         Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-z95kf                     Started container main
+34m         Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-lmt8x                     Created container: main
+34m         Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-h8kcp                     Started container main
+34m         Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-h8kcp                     Created container: main
+34m         Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-h8kcp                     Container image "quay.io/pierdipi/vllm-cpu:latest" already present on machine
+34m         Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-n5brr                     Container image "quay.io/pierdipi/vllm-cpu:latest" already present on machine
+34m         Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-n5brr                     Started container main
+34m         Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-n5brr                     Created container: main
+34m         Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-z95kf                     Created container: main
+34m         Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-lmt8x                     Started container main
+28m         Warning   Unhealthy             pod/qwen25-0-5b-instruct-kserve-665bf8f748-lmt8x                     Startup probe failed: Get "http://10.244.0.75:8000/health": dial tcp 10.244.0.75:8000: connect: connection refused
+28m         Warning   Unhealthy             pod/qwen25-0-5b-instruct-kserve-665bf8f748-z95kf                     Startup probe failed: Get "http://10.244.0.74:8000/health": dial tcp 10.244.0.74:8000: connect: connection refused
+28m         Warning   Unhealthy             pod/qwen25-0-5b-instruct-kserve-665bf8f748-h8kcp                     Startup probe failed: Get "http://10.244.0.73:8000/health": dial tcp 10.244.0.73:8000: connect: connection refused
+28m         Warning   Unhealthy             pod/qwen25-0-5b-instruct-kserve-665bf8f748-n5brr                     Startup probe failed: Get "http://10.244.0.76:8000/health": dial tcp 10.244.0.76:8000: connect: connection refused
+11m         Normal    Updated               llminferenceservice/qwen25-0-5b-instruct                             Updated v1.Secret llm-demo/qwen25-0-5b-instruct-kserve-self-signed-certs
+11m         Normal    Updated               llminferenceservice/qwen25-0-5b-instruct                             Updated v1.Deployment llm-demo/qwen25-0-5b-instruct-kserve-router-scheduler
+32m         Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve-router-scheduler              Scaled down replica set qwen25-0-5b-instruct-kserve-router-scheduler-79d5bcdc8 from 1 to 0
+32m         Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-router-scheduler-79d5bcdc8    Deleted pod: qwen25-0-5b-instruct-kserve-router-scheduler-79d5bcdc8-k25vz
+32m         Normal    Killing               pod/qwen25-0-5b-instruct-kserve-router-scheduler-79d5bcdc8-k25vz     Stopping container main
+32m         Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve-router-scheduler              Scaled up replica set qwen25-0-5b-instruct-kserve-router-scheduler-55b6dc5c9 from 0 to 1
+32m         Normal    Scheduled             pod/qwen25-0-5b-instruct-kserve-router-scheduler-55b6dc5c9-5nm69     Successfully assigned llm-demo/qwen25-0-5b-instruct-kserve-router-scheduler-55b6dc5c9-5nm69 to kserve-control-plane
+32m         Normal    SuccessfulCreate      replicaset/qwen25-0-5b-instruct-kserve-router-scheduler-55b6dc5c9    Created pod: qwen25-0-5b-instruct-kserve-router-scheduler-55b6dc5c9-5nm69
+32m         Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-router-scheduler-55b6dc5c9-5nm69     Container image "ghcr.io/llm-d/llm-d-inference-scheduler:v0.4.0" already present on machine
+32m         Normal    Created               pod/qwen25-0-5b-instruct-kserve-router-scheduler-55b6dc5c9-5nm69     Created container: main
+32m         Normal    Started               pod/qwen25-0-5b-instruct-kserve-router-scheduler-55b6dc5c9-5nm69     Started container main
+26m         Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve                               Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 5 to 2
+26m         Normal    SuccessfulRescale     horizontalpodautoscaler/qwen25-0-5b-instruct-kserve                  New size: 2; reason: All metrics below target
+26m         Warning   Error                 llminferenceservice/qwen25-0-5b-instruct                             Reconciliation failed: failed to reconcile workload: failed to reconcile single node workload: failed to reconcile main workload: failed to get defaults for v1.Deployment llm-demo/qwen25-0-5b-instruct-kserve: Operation cannot be fulfilled on deployments.apps "qwen25-0-5b-instruct-kserve": the object has been modified; please apply your changes to the latest version and try again
+26m         Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Deleted pod: qwen25-0-5b-instruct-kserve-665bf8f748-h8kcp
+26m         Normal    Killing               pod/qwen25-0-5b-instruct-kserve-665bf8f748-h8kcp                     Stopping container main
+26m         Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Deleted pod: qwen25-0-5b-instruct-kserve-665bf8f748-n5brr
+26m         Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Deleted pod: qwen25-0-5b-instruct-kserve-665bf8f748-z95kf
+26m         Normal    Killing               pod/qwen25-0-5b-instruct-kserve-665bf8f748-n5brr                     Stopping container main
+26m         Normal    Killing               pod/qwen25-0-5b-instruct-kserve-665bf8f748-z95kf                     Stopping container main
+12m         Normal    KEDAScalersStarted    scaledobject/qwen25-05b-instruct-keda-token-aware                    Scaler prometheus is built
+24m         Normal    KEDAScalersStarted    scaledobject/qwen25-05b-instruct-keda-token-aware                    Started scalers watch
+24m         Normal    ScaledObjectReady     scaledobject/qwen25-05b-instruct-keda-token-aware                    ScaledObject is ready for scaling
+12m         Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve                               Scaled down replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 2 to 1
+24m         Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Deleted pod: qwen25-0-5b-instruct-kserve-665bf8f748-lmt8x
+24m         Normal    Killing               pod/qwen25-0-5b-instruct-kserve-665bf8f748-lmt8x                     Stopping container main
+12m         Normal    Scheduled             pod/qwen25-0-5b-instruct-kserve-665bf8f748-s97zx                     Successfully assigned llm-demo/qwen25-0-5b-instruct-kserve-665bf8f748-s97zx to kserve-control-plane
+12m         Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve                               Scaled up replica set qwen25-0-5b-instruct-kserve-665bf8f748 from 1 to 2
+12m         Warning   ScaledObjectDeleted   scaledobject/qwen25-05b-instruct-keda-token-aware                    ScaledObject was deleted
+12m         Normal    KEDAScalersStopped    scaledobject/qwen25-05b-instruct-keda-token-aware                    Stopped scalers watch
+12m         Normal    SuccessfulCreate      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Created pod: qwen25-0-5b-instruct-kserve-665bf8f748-s97zx
+12m         Normal    Started               pod/qwen25-0-5b-instruct-kserve-665bf8f748-s97zx                     Started container storage-initializer
+12m         Normal    Created               pod/qwen25-0-5b-instruct-kserve-665bf8f748-s97zx                     Created container: storage-initializer
+12m         Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-665bf8f748-s97zx                     Container image "kserve/storage-initializer:v0.17.0" already present on machine
+12m         Normal    KEDAScalersStarted    scaledobject/qwen25-05b-instruct-keda-token-cache-composite          Scaler prometheus is built
+12m         Normal    ScaledObjectReady     scaledobject/qwen25-05b-instruct-keda-token-cache-composite          ScaledObject is ready for scaling
+12m         Normal    KEDAScalersStarted    scaledobject/qwen25-05b-instruct-keda-token-cache-composite          Started scalers watch
+12m         Normal    Killing               pod/qwen25-0-5b-instruct-kserve-665bf8f748-s97zx                     Stopping container storage-initializer
+12m         Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-665bf8f748                    Deleted pod: qwen25-0-5b-instruct-kserve-665bf8f748-s97zx
+11m         Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve-router-scheduler              Scaled down replica set qwen25-0-5b-instruct-kserve-router-scheduler-55b6dc5c9 from 1 to 0
+11m         Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-router-scheduler-55b6dc5c9    Deleted pod: qwen25-0-5b-instruct-kserve-router-scheduler-55b6dc5c9-5nm69
+11m         Normal    Killing               pod/qwen25-0-5b-instruct-kserve-router-scheduler-55b6dc5c9-5nm69     Stopping container main
+11m         Normal    SuccessfulCreate      replicaset/qwen25-0-5b-instruct-kserve-router-scheduler-598df8f7fb   Created pod: qwen25-0-5b-instruct-kserve-router-scheduler-598df8f7fb-tfpv8
+11m         Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve-router-scheduler              Scaled up replica set qwen25-0-5b-instruct-kserve-router-scheduler-598df8f7fb from 0 to 1
+11m         Normal    Scheduled             pod/qwen25-0-5b-instruct-kserve-router-scheduler-598df8f7fb-tfpv8    Successfully assigned llm-demo/qwen25-0-5b-instruct-kserve-router-scheduler-598df8f7fb-tfpv8 to kserve-control-plane
+11m         Normal    Started               pod/qwen25-0-5b-instruct-kserve-router-scheduler-598df8f7fb-tfpv8    Started container main
+11m         Normal    Created               pod/qwen25-0-5b-instruct-kserve-router-scheduler-598df8f7fb-tfpv8    Created container: main
+11m         Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-router-scheduler-598df8f7fb-tfpv8    Container image "ghcr.io/llm-d/llm-d-inference-scheduler:v0.4.0" already present on machine
+11m         Normal    SuccessfulDelete      replicaset/qwen25-0-5b-instruct-kserve-router-scheduler-598df8f7fb   Deleted pod: qwen25-0-5b-instruct-kserve-router-scheduler-598df8f7fb-tfpv8
+11m         Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve-router-scheduler              Scaled down replica set qwen25-0-5b-instruct-kserve-router-scheduler-598df8f7fb from 1 to 0
+11m         Normal    Killing               pod/qwen25-0-5b-instruct-kserve-router-scheduler-598df8f7fb-tfpv8    Stopping container main
+11m         Normal    ScalingReplicaSet     deployment/qwen25-0-5b-instruct-kserve-router-scheduler              Scaled up replica set qwen25-0-5b-instruct-kserve-router-scheduler-669cb584c9 from 0 to 1
+11m         Normal    SuccessfulCreate      replicaset/qwen25-0-5b-instruct-kserve-router-scheduler-669cb584c9   Created pod: qwen25-0-5b-instruct-kserve-router-scheduler-669cb584c9-cmfdz
+11m         Normal    Scheduled             pod/qwen25-0-5b-instruct-kserve-router-scheduler-669cb584c9-cmfdz    Successfully assigned llm-demo/qwen25-0-5b-instruct-kserve-router-scheduler-669cb584c9-cmfdz to kserve-control-plane
+11m         Normal    Started               pod/qwen25-0-5b-instruct-kserve-router-scheduler-669cb584c9-cmfdz    Started container main
+11m         Normal    Created               pod/qwen25-0-5b-instruct-kserve-router-scheduler-669cb584c9-cmfdz    Created container: main
+11m         Normal    Pulled                pod/qwen25-0-5b-instruct-kserve-router-scheduler-669cb584c9-cmfdz    Container image "ghcr.io/llm-d/llm-d-inference-scheduler:v0.4.0" already present on machine

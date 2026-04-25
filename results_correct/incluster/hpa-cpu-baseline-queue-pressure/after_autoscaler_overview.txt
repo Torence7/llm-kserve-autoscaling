@@ -1,0 +1,22 @@
+# timestamp
+Tue Apr 14 10:51:11 PM CDT 2026
+
+# scaledobjects
+
+# hpa
+NAME                          REFERENCE                                TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+qwen25-0-5b-instruct-kserve   Deployment/qwen25-0-5b-instruct-kserve   cpu: 30%/50%   1         5         5          12m
+
+# deployment
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                             SELECTOR
+qwen25-0-5b-instruct-kserve   4/5     5            4           4d13h   main         quay.io/pierdipi/vllm-cpu:latest   app.kubernetes.io/component=llminferenceservice-workload,app.kubernetes.io/name=qwen25-0-5b-instruct,app.kubernetes.io/part-of=llminferenceservice,kserve.io/component=workload,llm-d.ai/role=both
+
+# pods
+NAME                                                            READY   STATUS    RESTARTS      AGE     IP             NODE                   NOMINATED NODE   READINESS GATES
+bench-client                                                    1/1     Running   0             7h17m   10.244.0.54    kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-4klhx                    1/1     Running   0             10m     10.244.0.98    kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-9fbpq                    1/1     Running   0             4d13h   10.244.0.18    kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-kdvwt                    1/1     Running   0             11m     10.244.0.96    kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-mtqgr                    0/1     Running   1 (24s ago)   11m     10.244.0.95    kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-665bf8f748-r5qlj                    1/1     Running   0             10m     10.244.0.99    kserve-control-plane   <none>           <none>
+qwen25-0-5b-instruct-kserve-router-scheduler-668895b567-l6vvt   1/1     Running   0             8m32s   10.244.0.100   kserve-control-plane   <none>           <none>
