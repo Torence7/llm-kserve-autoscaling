@@ -168,14 +168,6 @@ esac
 echo "Waiting for deployment to be fully ready..."
 kubectl rollout status deploy "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --timeout=600s
 
-# Wait only for Running pods (terminating pods from a previous scale-down will
-# never become Ready and would cause a timeout).
-kubectl wait pod -n "${NAMESPACE}" \
-  -l app.kubernetes.io/name=qwen25-0-5b-instruct,kserve.io/component=workload \
-  --field-selector=status.phase=Running \
-  --for=condition=Ready \
-  --timeout=600s
-
 echo "Waiting for vLLM endpoint to respond..."
 for i in $(seq 1 60); do
   if curl -sf http://localhost:8002/v1/models > /dev/null 2>&1; then
