@@ -179,6 +179,190 @@ kubectl get secret prometheus-grafana -n monitoring \
 
 The dashboard defaults to the last 5 minutes and auto-refreshes every 10 seconds. Use the `Namespace` dropdown to select `llm-demo`.
 
+## ML-based autoscaling
+
+Instead of hand-tuned thresholds (HPA/KEDA), this policy uses a queueing-theory-informed regressor:
+
+1. Compute a Little's Law prior replica target.
+2. Learn residual corrections with a Gradient Boosted Tree.
+
+The trained model runs inside a small controller Pod that polls Prometheus and calls `kubectl scale`.
+
+### Architecture
+
+```
+Prometheus ──▶ controller.py ──▶ Little's Law prior ──▶ residual GBT ──▶ kubectl scale
+   (vLLM           (Pod in          N_prior = ceil(      correction      (target
+    metrics)        cluster)         λ * W / u )         model)          deployment)
+```
+
+**Features used by the residual model**:
+- `input_tokens_per_sec`
+- `output_tokens_per_sec` (primary bottleneck signal)
+- `p95_ttft_ms`
+- `p95_itl_ms`
+- `kv_cache_hit_rate`
+- `batch_size_avg`
+- `queue_depth`
+
+**Prior formula**:
+
+```
+N_prior = ceil((arrival_rate * mean_latency) / target_utilization_per_pod)
+```
+
+Arrival rate is estimated from token throughput, and mean latency is derived from TTFT + ITL assumptions. The regressor predicts the residual correction `delta`, and the controller applies:
+
+```
+N_final = clamp(ceil(N_prior + delta), min_replicas, max_replicas)
+```
+
+### Step 1: Gather robust training runs
+
+Generate diverse trajectories with mixed policies/scenarios. The fast matrix script now supports a robust mode:
+
+```bash
+source .venv/bin/activate
+
+PROM_URL="http://localhost:9090" \
+ROBUST_DATASET=1 \
+REPEATS=2 \
+bash scripts/benchmark/run_fast_matrix.sh --model qwen25-0.5b-instruct
+```
+
+This produces runs under:
+
+`results/policy_eval/<model_key>/<scenario>/<policy>_<timestamp>/`
+
+Each run should contain both:
+- `system_metrics.csv`
+- `requests.csv`
+
+The dataset builder fuses both files to build robust windowed features (token rates + p95 TTFT/ITL) with fallback logic.
+
+### Step 2: Build the residual-training CSV
+
+```bash
+python scripts/ml_autoscaler/collect_training_data.py \
+  --results-root results/policy_eval \
+  --model-key qwen25_05b_instruct \
+  --output data/ml_training_queue_residual.csv \
+  --min-replicas 1 \
+  --max-replicas 5 \
+  --window-seconds 30 \
+  --min-window-requests 3 \
+  --winsor-lower 0.01 \
+  --winsor-upper 0.99 \
+  --target-utilization-per-pod 0.75 \
+  --assumed-input-tokens-per-request 256 \
+  --assumed-output-tokens-per-request 128
+```
+
+Output CSV includes:
+- residual-model features
+- `little_law_prior_replicas`
+- `target_residual`
+- `target_replicas`
+
+### Step 3: Train the residual model
+
+```bash
+pip install -r requirements-ml.txt
+
+python scripts/ml_autoscaler/train_model.py \
+  --training-csv data/ml_training_queue_residual.csv \
+  --output models/ml_autoscaler.joblib \
+  --n-estimators 160 \
+  --max-depth 3 \
+  --learning-rate 0.06 \
+  --min-samples-leaf 8 \
+  --min-replicas 1 \
+  --max-replicas 5 \
+  --target-utilization-per-pod 0.75 \
+  --assumed-input-tokens-per-request 256 \
+  --assumed-output-tokens-per-request 128
+```
+
+Training prints replica-level metrics (MAE/RMSE/exact-match/within-1) and feature importances, then writes:
+- `models/ml_autoscaler.joblib`
+- `models/ml_autoscaler.meta.json`
+
+### Step 4: Deploy the controller
+
+```bash
+bash scripts/deploy_ml_autoscaler.sh \
+  --model qwen25-0.5b-instruct \
+  --policy ml-autoscaler
+```
+
+Controller logs include:
+- current feature snapshot
+- `little_law_prior`
+- predicted residual
+- final replica decision
+
+Tail logs:
+
+```bash
+kubectl logs -n llm-demo ml-autoscaler-qwen25-05b-instruct -f
+```
+
+### Step 5: Validate with dry-run (optional)
+
+With Prometheus port-forwarded, run locally first:
+
+```bash
+python scripts/ml_autoscaler/controller.py \
+  --model-path models/ml_autoscaler.joblib \
+  --prom-url http://localhost:9090 \
+  --deployment-name qwen25-0-5b-instruct-kserve \
+  --namespace llm-demo \
+  --served-model-name "Qwen/Qwen2.5-0.5B-Instruct" \
+  --min-replicas 1 --max-replicas 5 \
+  --interval 10 \
+  --dry-run
+```
+
+### Step 6: Evaluate against baselines
+
+```bash
+# Compare baseline policies and ML policy on the same scenario.
+for policy in hpa-cpu-baseline keda-waiting-requests ml-autoscaler; do
+  PROM_URL="http://localhost:9090" \
+  bash scripts/benchmark/run_policy_eval.sh \
+    --model qwen25-0.5b-instruct \
+    --policy "$policy" \
+    --scenario short-bursts
+done
+
+# Summarize runs.
+python scripts/benchmark/summarize_policy_study.py \
+  --results-root results/policy_eval \
+  --model-key qwen25_05b_instruct \
+  --study-root results/study
+```
+
+### Step 7: Retrain cadence
+
+Use this loop after collecting additional runs:
+
+```bash
+# 1) rebuild training CSV
+python scripts/ml_autoscaler/collect_training_data.py \
+  --results-root results/policy_eval \
+  --model-key qwen25_05b_instruct \
+  --output data/ml_training_queue_residual.csv
+
+# 2) retrain residual model
+python scripts/ml_autoscaler/train_model.py \
+  --training-csv data/ml_training_queue_residual.csv \
+  --output models/ml_autoscaler.joblib \
+  --n-estimators 160 --max-depth 3 --learning-rate 0.06
+
+# 3) redeploy controller
+bash scripts/deploy_ml_autoscaler.sh --model qwen25-0.5b-instruct --policy ml-autoscaler
+```
+
 ## Adding another model
 
 To support a new model:

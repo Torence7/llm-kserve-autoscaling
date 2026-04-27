@@ -23,9 +23,9 @@ Optional environment variables:
   PROM_URL="http://localhost:9090"
   METRIC_INTERVAL=5
   POLICY_SETTLE_SECONDS=20
-  BENCH_TIMEOUT_SECONDS=15
-  DRAIN_TIMEOUT_SECONDS=5
-  MAX_IN_FLIGHT=1
+  BENCH_TIMEOUT_SECONDS=60
+  DRAIN_TIMEOUT_SECONDS=30
+  MAX_IN_FLIGHT=32
   START_REPLICAS=1
 EOF
 }
@@ -72,9 +72,9 @@ RESULTS_ROOT="${RESULTS_ROOT:-${REPO_ROOT}/results/policy_eval}"
 PROM_URL="${PROM_URL:-http://localhost:9090}"
 METRIC_INTERVAL="${METRIC_INTERVAL:-5}"
 POLICY_SETTLE_SECONDS="${POLICY_SETTLE_SECONDS:-20}"
-BENCH_TIMEOUT_SECONDS="${BENCH_TIMEOUT_SECONDS:-15}"
-DRAIN_TIMEOUT_SECONDS="${DRAIN_TIMEOUT_SECONDS:-5}"
-MAX_IN_FLIGHT="${MAX_IN_FLIGHT:-1}"
+BENCH_TIMEOUT_SECONDS="${BENCH_TIMEOUT_SECONDS:-60}"
+DRAIN_TIMEOUT_SECONDS="${DRAIN_TIMEOUT_SECONDS:-30}"
+MAX_IN_FLIGHT="${MAX_IN_FLIGHT:-32}"
 START_REPLICAS="${START_REPLICAS:-${MIN_REPLICAS}}"
 
 TARGET="${TARGET:-http://localhost:${LOCAL_PORT}/v1}"
@@ -130,6 +130,11 @@ log "Namespace: ${NAMESPACE}"
 log "Target endpoint: ${TARGET}"
 log "Results dir: ${run_dir}"
 
+log "Cleaning up any previous autoscaler before reset..."
+kubectl delete hpa -n "${NAMESPACE}" "${DEPLOYMENT_NAME}" --ignore-not-found >/dev/null 2>&1 || true
+kubectl delete scaledobject -n "${NAMESPACE}" -l "ml-autoscaler-target=${DEPLOYMENT_NAME}" --ignore-not-found >/dev/null 2>&1 || true
+kubectl delete pod -n "${NAMESPACE}" -l app=ml-autoscaler,ml-autoscaler-target="${DEPLOYMENT_NAME}" --ignore-not-found >/dev/null 2>&1 || true
+
 log "Resetting deployment replicas to START_REPLICAS=${START_REPLICAS} before applying policy..."
 kubectl scale deploy "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --replicas="${START_REPLICAS}"
 kubectl rollout status deploy "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --timeout=180s
@@ -149,13 +154,29 @@ case "${POLICY_TYPE}" in
       --policy "${POLICY_FILE}"
     kubectl get scaledobject -n "${NAMESPACE}" || true
     ;;
+  ml)
+    bash "${REPO_ROOT}/scripts/deploy_ml_autoscaler.sh" \
+      --model "${MODEL_FILE}" \
+      --policy "${POLICY_FILE}"
+    kubectl get pod -n "${NAMESPACE}" -l app=ml-autoscaler || true
+    ;;
   *)
     die "Unsupported policy_type for policy eval: ${POLICY_TYPE}"
     ;;
 esac
 
-log "Waiting ${POLICY_SETTLE_SECONDS}s for policy to settle..."
-sleep "${POLICY_SETTLE_SECONDS}"
+echo "Waiting for deployment to be fully ready..."
+kubectl rollout status deploy "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" --timeout=600s
+
+echo "Waiting for vLLM endpoint to respond..."
+for i in $(seq 1 60); do
+  if curl -sf http://localhost:8002/v1/models > /dev/null 2>&1; then
+    echo "Endpoint ready after ~$((i*10))s."
+    break
+  fi
+  echo "  [$i/60] Not ready yet, retrying in 10s..."
+  sleep 10
+done
 
 log "Starting Prometheus metric collection..."
 python -u "${REPO_ROOT}/scripts/metrics/collect_metrics.py" \

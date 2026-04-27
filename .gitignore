@@ -9,4 +9,8 @@ get_helm.sh
 configs/data/ShareGPT_V3_unfiltered_cleaned_split.json
 configs/data/ShareGPT_V3_unfiltered_cleaned_split.json
 configs/data/ShareGPT_V3_unfiltered_cleaned_split.json
-configs/data/sharegpt_prompts_5k.jsonl
+
+# ML autoscaler artifacts
+models/
+data/
+results/

@@ -1,0 +1,15 @@
+policy_key: ml-autoscaler
+policy_type: ml
+
+min_replicas: 1
+max_replicas: 5
+polling_interval: 10
+cooldown_period: 30
+
+ml:
+  model_path: models/ml_autoscaler.joblib
+  controller_image: python:3.11-slim
+  controller_script: scripts/ml_autoscaler/controller.py
+
+prometheus:
+  server_address: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
